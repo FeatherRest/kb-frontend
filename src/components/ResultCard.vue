@@ -26,13 +26,15 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useKbStore } from '../stores/kbStore'
 
 const props = defineProps({ result: Object })
 const expanded = ref(false)
+const store = useKbStore()
 
 function highlightSnippet(text) {
   if (!text) return ''
-  const q = useKbStore()?.searchQuery || ''
+  const q = store.searchQuery || ''
   if (!q) return text
   const parts = q.split(/\s+/).filter(Boolean)
   let result = text
@@ -42,7 +44,4 @@ function highlightSnippet(text) {
   })
   return result
 }
-</script>
-<script>
-import { useKbStore } from '../stores/kbStore'
 </script>

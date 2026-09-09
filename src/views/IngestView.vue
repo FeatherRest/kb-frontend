@@ -15,7 +15,12 @@
       </n-form-item>
 
       <n-form-item label="内容 (Markdown)">
-        <md-editor v-model="content" :theme="'dark'" style="min-height:300px;" />
+        <n-input
+          v-model:value="content"
+          type="textarea"
+          placeholder="输入 Markdown 内容"
+          :autosize="{ minRows: 12, maxRows: 24 }"
+        />
       </n-form-item>
 
       <n-form-item label="文件上传">
@@ -34,10 +39,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useMessage } from 'naive-ui'
-import { MdEditor } from 'md-editor-v3'
-import 'md-editor-v3/lib/style.css'
 import FileUploader from '../components/FileUploader.vue'
-import { ingestDoc } from '../api/kbApi'
+import { ingestFile } from '../api/kbApi'
 
 const message = useMessage()
 const title = ref('')
@@ -49,10 +52,14 @@ const files = ref([])
 function onFiles(fileList) { files.value = fileList }
 
 async function submit() {
-  if (!content.value) { message.warning('请输入内容'); return }
+  const selectedFile = files.value[0]?.file
+  const file = selectedFile || (content.value
+    ? new File([content.value], title.value.trim() ? `${title.value.trim()}.md` : 'knowledge.md', { type: 'text/markdown' })
+    : null)
+  if (!file) { message.warning('请输入内容或选择文件'); return }
   submitting.value = true
   try {
-    await ingestDoc({ title: title.value, content: content.value, access_level: accessLevel.value })
+    await ingestFile(file)
     message.success('录入成功 ✅')
     content.value = ''
     title.value = ''

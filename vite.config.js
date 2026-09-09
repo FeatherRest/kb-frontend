@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
-  base: '/knowledge/',
+  base: '/kb/',
   server: { port: 8081 },
   define: {
     'import.meta.env.VITE_KB_API': JSON.stringify(process.env.VITE_KB_API || '/kb/api')

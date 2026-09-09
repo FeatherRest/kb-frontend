@@ -1,19 +1,22 @@
 import axios from 'axios'
+import { resolveKbApiBase } from './apiBase.js'
 
-const API = import.meta.env.VITE_KB_API || 'http://localhost:9999'
+const API = resolveKbApiBase(import.meta.env.VITE_KB_API)
 
 const api = axios.create({ baseURL: API, timeout: 15000 })
 
-export function searchKB(q, top_k = 5, scope = 'open') {
-  return api.post('/v1/search', { q, top_k, scope }).then(r => r.data)
+export function searchKB(q, top_k = 8, mode = 'hybrid') {
+  return api.post('/v1/search', { q, top_k, mode }).then(r => r.data)
 }
 
-export function ingestDoc(meta_path) {
-  return api.post('/v1/ingest', { meta_path }).then(r => r.data)
+export function ingestFile(file) {
+  const body = new FormData()
+  body.append('file', file)
+  return api.post('/v1/ingest/file', body).then(r => r.data)
 }
 
-export function getDocuments(scope = 'open', limit = 50) {
-  return api.get('/v1/documents', { params: { scope, limit } }).then(r => r.data)
+export function getDocuments(limit = 50) {
+  return api.get('/v1/documents', { params: { limit } }).then(r => r.data)
 }
 
 export function getStats() {

@@ -16,6 +16,12 @@
       </template>
     </n-input>
 
+    <n-radio-group v-model:value="mode" size="small" style="margin-top:12px;">
+      <n-radio-button value="hybrid">混合</n-radio-button>
+      <n-radio-button value="dense">向量</n-radio-button>
+      <n-radio-button value="sparse">关键词</n-radio-button>
+    </n-radio-group>
+
     <!-- 搜索历史 -->
     <n-collapse v-if="store.searchHistory.length && !store.searchResults.length" style="margin-top:16px;">
       <n-collapse-item title="搜索历史" name="history">
@@ -40,8 +46,9 @@ import ResultCard from '../components/ResultCard.vue'
 
 const store = useKbStore()
 const query = ref('')
+const mode = ref('hybrid')
 
 function doSearch() {
-  if (query.value.trim()) store.search(query.value.trim())
+  if (query.value.trim()) store.search(query.value.trim(), mode.value)
 }
 </script>

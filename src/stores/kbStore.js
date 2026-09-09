@@ -12,11 +12,12 @@ export const useKbStore = defineStore('kb', {
     loading: false,
   }),
   actions: {
-    async search(q) {
+    async search(q, mode = 'hybrid') {
       this.loading = true
       this.searchQuery = q
       try {
-        this.searchResults = await searchKB(q)
+        const data = await searchKB(q, 8, mode)
+        this.searchResults = Array.isArray(data) ? data : (data.results || [])
         if (q && !this.searchHistory.includes(q)) {
           this.searchHistory.unshift(q)
           if (this.searchHistory.length > 20) this.searchHistory.pop()
@@ -27,7 +28,8 @@ export const useKbStore = defineStore('kb', {
       }
     },
     async loadDocuments() {
-      this.documents = await getDocuments()
+      const data = await getDocuments()
+      this.documents = Array.isArray(data) ? data : (data.documents || [])
     },
     async loadStats() {
       this.stats = await getStats()
