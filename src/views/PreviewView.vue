@@ -143,18 +143,17 @@ const issues = computed(() => {
 })
 
 const stages = computed(() => {
-  const sel = result.value?.meta?.selection || {}
+  const r = result.value
+  if (!r) return []
+  const sel = r.meta?.selection || {}
   const out = []
-  if (sel.route) out.push({ role: 'route', name: sel.route, note: sel.reason || '' })
-  if (result.value?.parser) out.push({ role: 'primary', name: result.value.parser })
-  for (const a of result.value?.meta?.assets || []) {
-    out.push({ role: 'enrich', name: a.asset_type || 'asset', note: a.source || '' })
+  out.push({ role: 'input', label: r.filename || '输入文件', desc: `${r.ext || ''} · ${formatSize(r.size)}` })
+  if (sel.route) out.push({ role: 'branch', label: sel.route, desc: sel.reason || '路由选择' })
+  if (r.parser) out.push({ role: 'process', label: r.parser, desc: `解析器 ${r.parser_version || ''}` })
+  for (const a of r.meta?.assets || []) {
+    out.push({ role: 'process', label: a.asset_type || 'asset', desc: a.source || '' })
   }
-  if (!out.length) {
-    out.push({ role: 'detect', name: '类型检测' })
-    out.push({ role: 'primary', name: result.value?.parser || '解析器' })
-    out.push({ role: 'post', name: 'Markdown 组装' })
-  }
+  out.push({ role: 'output', label: '输出 Markdown', desc: `${r.full_length || 0} 字` })
   return out
 })
 

@@ -19,7 +19,12 @@
       <template v-else>
         <n-input v-model:value="q" placeholder="按标题/摘要过滤" style="width: 260px" clearable />
         <n-select v-model:value="errSort" :options="ERR_SORT_OPTIONS" style="width: 170px" />
+        <n-select v-model:value="errLearned" :options="ERR_LEARNED_OPTIONS" style="width: 150px" />
         <n-button size="small" @click="loadErrors">刷新</n-button>
+        <span class="kb-dim">
+          {{ filteredErrors.length }} / {{ errors.length }} 条 ·
+          {{ errors.filter((r) => !r.read).length }} 条未学习
+        </span>
       </template>
     </n-space>
 
@@ -47,6 +52,14 @@
               <n-tag size="tiny" :bordered="false" round>{{ d.parser }}</n-tag>
               <n-tag size="tiny" :bordered="false" round>{{ d.chunk_count }} 分块</n-tag>
               <n-tag size="tiny" :bordered="false" round>{{ formatSize(d.file_size) }}</n-tag>
+              <n-button
+                size="tiny"
+                quaternary
+                :type="d.learned_at ? 'success' : 'default'"
+                @click.stop="toggleDocLearned(d)"
+              >
+                {{ d.learned_at ? '✓ 已学习' : '标记已学习' }}
+              </n-button>
             </n-space>
           </n-card>
         </n-space>
@@ -79,8 +92,8 @@
             <div class="kb-dim" style="margin-top: 4px">{{ r.summary || r.component }}</div>
             <n-space :size="8" style="margin-top: 8px" align="center">
               <n-button size="tiny" tertiary @click="openErr(r)">详解</n-button>
-              <n-button size="tiny" quaternary :type="r.read ? 'default' : 'primary'" @click="toggleRead(r)">
-                {{ r.read ? '标记未读' : '标记已读' }}
+              <n-button size="tiny" quaternary :type="r.read ? 'success' : 'primary'" @click="toggleRead(r)">
+                {{ r.read ? '✓ 已学习' : '标记已学习' }}
               </n-button>
               <n-tag v-if="r.flagged" size="tiny" type="warning" round>已标记</n-tag>
               <span class="kb-dim">{{ r.comment_count || 0 }} 条评论</span>
@@ -137,6 +150,7 @@ import {
   listDocuments,
   listErrorReports,
   setErrorRead,
+  setLearned,
 } from '../api/kbApi.js'
 
 const message = useMessage()
@@ -163,7 +177,13 @@ const ERR_SORT_OPTIONS = [
   { label: '日期 ↓', value: 'date_desc' },
   { label: '日期 ↑', value: 'date_asc' },
   { label: '级别 ↓', value: 'severity_desc' },
-  { label: '未读优先', value: 'unread' },
+  { label: '未学习优先', value: 'unread' },
+]
+/** 错误报告的「已学习」三态过滤（read 标记即学习状态，与 Dashboard 一致） */
+const ERR_LEARNED_OPTIONS = [
+  { label: '全部状态', value: '' },
+  { label: '仅未学习', value: 'unlearned' },
+  { label: '仅已学习', value: 'learned' },
 ]
 const CATEGORY_OF = {
   tolearn: '待学习',
@@ -186,6 +206,7 @@ const total = ref(0)
 
 const errors = ref([])
 const errSort = ref('date_desc')
+const errLearned = ref('')
 const errShow = ref(false)
 const errDetail = ref(null)
 const errHtml = ref('')
@@ -196,12 +217,15 @@ const detailDocId = ref('')
 
 const filteredErrors = computed(() => {
   const kw = q.value.trim().toLowerCase()
-  let list = errors.value.filter(
-    (r) =>
+  let list = errors.value.filter((r) => {
+    if (errLearned.value === 'unlearned' && r.read) return false
+    if (errLearned.value === 'learned' && !r.read) return false
+    return (
       !kw ||
       String(r.title || '').toLowerCase().includes(kw) ||
-      String(r.summary || '').toLowerCase().includes(kw),
-  )
+      String(r.summary || '').toLowerCase().includes(kw)
+    )
+  })
   const order = { high: 3, critical: 3, medium: 2, low: 1 }
   if (errSort.value === 'date_desc') list = [...list].sort((a, b) => String(b.date).localeCompare(String(a.date)))
   if (errSort.value === 'date_asc') list = [...list].sort((a, b) => String(a.date).localeCompare(String(b.date)))
@@ -307,6 +331,32 @@ async function postErrComment() {
 function openDetail(docId) {
   detailDocId.value = docId
   detailShow.value = true
+  // 与 Dashboard 一致：打开详情即视为已学习（异步、不阻塞抽屉渲染）
+  autoMarkLearned(docId)
+}
+
+/** 点开文档即标记已学习（仅当当前未标记；失败静默，不打断阅读） */
+async function autoMarkLearned(docId) {
+  const doc = docs.value.find((d) => d.doc_id === docId)
+  if (!doc || doc.learned_at) return
+  try {
+    await setLearned(docId, true)
+    doc.learned_at = new Date().toISOString()
+  } catch {
+    /* 静默：自动标记失败不影响阅读 */
+  }
+}
+
+/** 列表内快捷标记 / 取消已学习 */
+async function toggleDocLearned(doc) {
+  const next = !doc.learned_at
+  try {
+    await setLearned(doc.doc_id, next)
+    doc.learned_at = next ? new Date().toISOString() : ''
+    message.success(next ? '已标记学习' : '已取消学习')
+  } catch (e) {
+    message.error(e.message)
+  }
 }
 
 function formatSize(bytes) {

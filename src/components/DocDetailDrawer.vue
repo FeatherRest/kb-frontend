@@ -90,6 +90,14 @@
               </n-button>
             </n-space>
 
+            <n-input
+              v-model:value="customPrompt"
+              size="small"
+              clearable
+              placeholder="额外要求（可选）：如「面向零基础讲，重点说清为什么」——填了会重新生成"
+              style="margin-bottom: 10px"
+            />
+
             <div v-if="explain?.has_explain" class="kb-explain">{{ explain.explain_text }}</div>
             <n-empty v-else description="尚无讲解文本" />
 
@@ -169,6 +177,7 @@ const explain = ref(null)
 const chunking = ref(null)
 const generatingText = ref(false)
 const generatingAudio = ref(false)
+const customPrompt = ref('')
 
 const audioEl = ref(null)
 const playing = ref(false)
@@ -252,8 +261,10 @@ function openRawHtml() {
 
 async function genExplain(force = false) {
   generatingText.value = true
+  const custom = customPrompt.value.trim()
   try {
-    const r = await generateExplain(props.docId, { force })
+    // 填了「额外要求」就强制重生成，否则沿用已有讲解
+    const r = await generateExplain(props.docId, { force: force || Boolean(custom), custom_prompt: custom })
     explain.value = { ...(explain.value || {}), ...r, has_explain: Boolean(r.explain_text) }
     message.success(r.generated ? '讲解已生成' : '已有讲解文本')
   } catch (e) {

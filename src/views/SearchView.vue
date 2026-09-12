@@ -47,6 +47,17 @@
         🔀 重排
       </n-button>
       <n-tag v-if="store.reranked" size="small" type="success" round>✨ 已重排</n-tag>
+
+      <n-radio-group
+        v-if="store.canCompare"
+        size="small"
+        :value="store.viewMode"
+        @update:value="store.setView"
+      >
+        <n-radio-button value="raw">原始排序</n-radio-button>
+        <n-radio-button value="reranked">重排后</n-radio-button>
+      </n-radio-group>
+
       <span v-if="timingText" class="kb-dim">{{ timingText }}</span>
     </n-space>
 
@@ -77,7 +88,9 @@
 
     <n-spin :show="store.loading">
       <div v-if="store.searchResults.length" class="kb-dim" style="margin-bottom: 8px">
-        {{ store.searchResults.length }} 条结果 · {{ MODE_LABEL[store.searchMode] }}
+        {{ store.searchResults.length }} 条结果 · {{ MODE_LABEL[store.searchMode] }} ·
+        {{ store.viewMode === 'reranked' ? '重排后排序' : '原始排序' }}
+        <span v-if="movedCount"> · 其中 {{ movedCount }} 条排名发生变化</span>
       </div>
       <n-space vertical :size="10">
         <ResultCard
@@ -85,6 +98,7 @@
           :key="r.doc_id + '-' + i"
           :result="r"
           :rank="i + 1"
+          :rank-delta="rankDelta(r)"
           :query="store.searchQuery"
           @detail="openDetail(r.doc_id)"
         />
@@ -173,6 +187,25 @@ function openDetail(docId) {
   detailDocId.value = docId
   detailShow.value = true
 }
+
+/** 重排后每条结果的排名变化（正数=上升，null=新出现） */
+function rankDelta(result) {
+  if (store.viewMode !== 'reranked' || !store.canCompare) return 0
+  const oldIdx = store.rawResults.findIndex((x) => x.doc_id === result.doc_id)
+  if (oldIdx < 0) return null
+  const newIdx = store.rerankedResults.findIndex((x) => x.doc_id === result.doc_id)
+  if (newIdx < 0) return 0
+  return oldIdx - newIdx
+}
+
+/** 排名发生变化的条数（用于结果头提示） */
+const movedCount = computed(() => {
+  if (store.viewMode !== 'reranked' || !store.canCompare) return 0
+  return store.rerankedResults.filter((r) => {
+    const d = rankDelta(r)
+    return d !== 0
+  }).length
+})
 
 onMounted(async () => {
   try {

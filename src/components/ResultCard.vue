@@ -2,6 +2,10 @@
   <n-card size="small" class="kb-result" :bordered="true">
     <div class="kb-result-head">
       <n-tag size="tiny" type="info" round>#{{ rank }}</n-tag>
+      <n-tag v-if="rankDelta" size="tiny" :type="rankDelta > 0 ? 'success' : 'warning'" round>
+        {{ rankDelta > 0 ? '↑' + rankDelta : '↓' + Math.abs(rankDelta) }}
+      </n-tag>
+      <n-tag v-else-if="rankDelta === null" size="tiny" round :bordered="false">新</n-tag>
       <span class="kb-result-title" :title="result.title">{{ result.title || '(无标题)' }}</span>
       <n-tag size="tiny" :type="scoreType" round>{{ score }}</n-tag>
     </div>
@@ -45,6 +49,8 @@ const props = defineProps({
   result: { type: Object, required: true },
   rank: { type: Number, default: 1 },
   query: { type: String, default: '' },
+  /** 重排对比：>0 上升名次，<0 下降名次，null 新出现，0 不变 */
+  rankDelta: { type: [Number, null], default: 0 },
 })
 defineEmits(['detail'])
 

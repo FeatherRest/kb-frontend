@@ -51,6 +51,22 @@
         <n-form-item label="经验">
           <n-input v-model:value="form.experience" type="textarea" :rows="3" />
         </n-form-item>
+        <n-form-item label="待办清单">
+          <n-input
+            v-model:value="form.todo_list_text"
+            type="textarea"
+            :rows="3"
+            placeholder="每行一项（写入 todo_list 字段）"
+          />
+        </n-form-item>
+        <n-form-item label="用到的技能">
+          <n-input
+            v-model:value="form.skills_used_text"
+            type="textarea"
+            :rows="2"
+            placeholder="每行一个技能名（写入 skills_used 字段）"
+          />
+        </n-form-item>
       </n-form>
       <template #footer>
         <n-space justify="end">
@@ -217,6 +233,8 @@ function openCreate() {
     details: '',
     scratchpad: '',
     experience: '',
+    todo_list_text: '',
+    skills_used_text: '',
   })
   editShow.value = true
 }
@@ -232,9 +250,17 @@ function openEdit(row) {
     details: row.details || '',
     scratchpad: row.scratchpad || '',
     experience: row.experience || '',
+    todo_list_text: (row.todo_list || []).join('\n'),
+    skills_used_text: (row.skills_used || []).join('\n'),
   })
   editShow.value = true
 }
+
+const splitLines = (text) =>
+  String(text || '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean)
 
 async function save() {
   if (!form.title.trim()) {
@@ -245,6 +271,11 @@ async function save() {
   try {
     const payload = { ...form }
     delete payload.id
+    // 文本域 ↔ 数组字段（后端 plan_api 直接存 todo_list / skills_used）
+    payload.todo_list = splitLines(form.todo_list_text)
+    payload.skills_used = splitLines(form.skills_used_text)
+    delete payload.todo_list_text
+    delete payload.skills_used_text
     if (form.id) await updatePlan(form.id, payload)
     else await createPlan(payload)
     message.success('已保存')

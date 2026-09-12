@@ -42,7 +42,7 @@
       <n-empty v-if="!loading && !filtered.length" description="无匹配解析器" style="margin-top: 40px" />
     </n-spin>
 
-    <n-modal v-model:show="detailShow" preset="card" :title="detail?.name || detail?.parser" style="width: 620px">
+    <n-modal v-model:show="detailShow" preset="card" :title="detail?.name || detail?.parser" style="width: 820px">
       <n-descriptions :column="1" bordered size="small" label-placement="left">
         <n-descriptions-item label="标识">{{ detail?.parser }}</n-descriptions-item>
         <n-descriptions-item label="引擎">{{ detail?.engine }}</n-descriptions-item>
@@ -55,6 +55,12 @@
         </n-descriptions-item>
         <n-descriptions-item label="说明">{{ detail?.note || '-' }}</n-descriptions-item>
       </n-descriptions>
+
+      <n-divider style="margin: 14px 0 10px">解析流程</n-divider>
+      <div v-if="detail && !PARSER_WORKFLOWS[detail.name]" class="kb-dim" style="margin-bottom: 8px">
+        该解析器暂无专属流程图，以下为通用流程
+      </div>
+      <WorkflowDiagram :stages="detailStages" :active-parser="detail?.parser" />
     </n-modal>
   </div>
 </template>
@@ -62,6 +68,8 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useMessage } from 'naive-ui'
+import WorkflowDiagram from '../components/WorkflowDiagram.vue'
+import { PARSER_WORKFLOWS, workflowFor } from '../data/parserWorkflows.js'
 import { getParsers, toggleParser } from '../api/kbApi.js'
 
 const message = useMessage()
@@ -86,6 +94,9 @@ const categoryOptions = computed(() => {
 })
 
 const enabledCount = computed(() => parsers.value.filter((p) => p.enabled).length)
+
+/** 详情弹窗里的流程图（按解析器显示名取，未命中回退通用流程） */
+const detailStages = computed(() => workflowFor(detail.value?.name))
 
 const filtered = computed(() => {
   const kw = q.value.trim().toLowerCase()

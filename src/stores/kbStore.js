@@ -6,12 +6,15 @@ const MAX_HISTORY = 20
 
 export const useKbStore = defineStore('kb', {
   state: () => ({
-    searchResults: [],
+    /** 原始排序结果（未重排） */
+    rawResults: [],
+    /** CrossEncoder 重排后的结果 */
+    rerankedResults: [],
+    /** 当前展示哪一份：raw | reranked */
+    viewMode: 'raw',
     searchQuery: '',
     searchMode: 'hybrid',
-    /** rerankActive=true 表示当前结果已包含 CrossEncoder 重排排序 */
     rerankRequested: false,
-    rawResults: [],
     timing: null,
     reranked: false,
     searchHistory: readHistory(),
@@ -22,7 +25,12 @@ export const useKbStore = defineStore('kb', {
     error: '',
   }),
   getters: {
-    hasResults: (s) => s.searchResults.length > 0,
+    /** 当前视图的结果（搜索页直接用这个） */
+    searchResults: (s) => (s.viewMode === 'reranked' ? s.rerankedResults : s.rawResults),
+    hasResults: (s) =>
+      (s.viewMode === 'reranked' ? s.rerankedResults : s.rawResults).length > 0,
+    /** 是否存在可对比的双视图 */
+    canCompare: (s) => s.rerankedResults.length > 0 && s.rawResults.length > 0,
   },
   actions: {
     async search({ q, mode = null, top_k = 8, rerank = null, silent = false }) {
@@ -44,21 +52,33 @@ export const useKbStore = defineStore('kb', {
         })
         const results = Array.isArray(data) ? data : data.results || []
         if (rerank === true) {
+          // 保留重排前的排序，供「原始 / 重排后」对比
+          if (!this.rawResults.length) this.rawResults = [...this.searchResults]
+          this.rerankedResults = results
+          this.viewMode = 'reranked'
           this.rerankRequested = true
-        } else if (rerank === null || rerank === undefined) {
+        } else {
+          this.rawResults = results
+          this.rerankedResults = []
+          this.viewMode = 'raw'
           this.rerankRequested = Boolean(data.reranked)
         }
-        this.searchResults = results
         this.timing = data.timing || null
         this.reranked = Boolean(data.reranked)
         pushHistory(this, query)
       } catch (e) {
         this.error = e.message
-        if (!silent) this.searchResults = []
+        if (!silent) {
+          this.rawResults = []
+          this.rerankedResults = []
+        }
       } finally {
         this.loading = false
         this.rerankLoading = false
       }
+    },
+    setView(mode) {
+      this.viewMode = mode === 'reranked' ? 'reranked' : 'raw'
     },
     /** 用 CrossEncoder 对当前查询重排（服务端 rerank=true 重新检索） */
     async rerank() {
