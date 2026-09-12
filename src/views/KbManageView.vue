@@ -80,7 +80,7 @@
           <n-input v-model:value="form.name" placeholder="例如：产品资料库" @update:value="onNameChange" />
         </n-form-item>
         <n-form-item label="标识 kb_id">
-          <n-input v-model:value="form.kb_id" placeholder="小写字母/数字/-/_，留空按名称生成" @update:value="kbIdTouched = true" />
+          <n-input v-model:value="form.kb_id" placeholder="小写字母/数字/-/_，留空按名称生成" @update:value="onKbIdChange" />
         </n-form-item>
         <n-form-item label="描述">
           <n-input v-model:value="form.description" type="textarea" :rows="2" />
@@ -183,6 +183,12 @@ function openCreate() {
 function onNameChange(v) {
   // 用户未手动改过 kb_id/路径时，跟着名称自动生成，保持 kb_id 与文件夹名一致
   if (!kbIdTouched.value) form.kb_id = v ? slugify(v) : ''
+  if (!rootTouched.value) form.root_path = v ? `${rootPath.value}/${slugify(v)}` : ''
+}
+
+/** 手改 kb_id 后：默认文件夹跟随新 ID（除非用户自己改过文件夹），避免文件夹落到 slug 兜底值 */
+function onKbIdChange(v) {
+  kbIdTouched.value = true
   if (!rootTouched.value) form.root_path = v ? `${rootPath.value}/${slugify(v)}` : ''
 }
 

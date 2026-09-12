@@ -176,7 +176,8 @@ async function runPreview(filename, rawFile, rawText) {
   loading.value = true
   error.value = ''
   try {
-    const content = rawText ?? (await fileToBase64(rawFile))
+    // 后端 /preview-parse 要求 base64；粘贴的文本必须先编码（直接传明文在非 ASCII 内容上会解码报错）
+    const content = rawText != null ? textToBase64(rawText) : await fileToBase64(rawFile)
     lastFile.value = { filename, content }
     result.value = await previewParse({ filename, content })
     tab.value = 'markdown'
@@ -196,6 +197,14 @@ function fileToBase64(file) {
     reader.onerror = () => reject(new Error('读取文件失败'))
     reader.readAsDataURL(file)
   })
+}
+
+/** 文本 → base64（UTF-8 安全，中文不会炸） */
+function textToBase64(text) {
+  const bytes = new TextEncoder().encode(text)
+  let bin = ''
+  for (const byte of bytes) bin += String.fromCharCode(byte)
+  return btoa(bin)
 }
 
 function download(kind) {

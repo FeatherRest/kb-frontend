@@ -2,30 +2,31 @@
   <div>
     <div class="kb-page-title">专区</div>
 
-    <n-space align="center" :size="10" style="margin-bottom: 14px" wrap>
+    <!-- 工具栏：两条分支各用一个 n-space（避免 v-if/v-else 片段在 n-space 插槽内被复用不替换） -->
+    <n-space v-if="zone !== 'errors'" align="center" :size="10" style="margin-bottom: 14px" wrap>
       <n-select v-model:value="zone" :options="ZONE_OPTIONS" style="width: 190px" @update:value="onZoneChange" />
-      <template v-if="zone !== 'errors'">
-        <n-input
-          v-model:value="q"
-          placeholder="按标题/来源过滤"
-          style="width: 260px"
-          clearable
-          @keyup.enter="loadLibrary"
-        />
-        <n-select v-model:value="orderBy" :options="ORDER_OPTIONS" style="width: 150px" @update:value="loadLibrary" />
-        <n-select v-model:value="learned" :options="LEARNED_OPTIONS" style="width: 140px" @update:value="loadLibrary" />
-        <n-button size="small" @click="loadLibrary">刷新</n-button>
-      </template>
-      <template v-else>
-        <n-input v-model:value="q" placeholder="按标题/摘要过滤" style="width: 260px" clearable />
-        <n-select v-model:value="errSort" :options="ERR_SORT_OPTIONS" style="width: 170px" />
-        <n-select v-model:value="errLearned" :options="ERR_LEARNED_OPTIONS" style="width: 150px" />
-        <n-button size="small" @click="loadErrors">刷新</n-button>
-        <span class="kb-dim">
-          {{ filteredErrors.length }} / {{ errors.length }} 条 ·
-          {{ errors.filter((r) => !r.read).length }} 条未学习
-        </span>
-      </template>
+      <n-input
+        v-model:value="q"
+        placeholder="按标题/来源过滤"
+        style="width: 260px"
+        clearable
+        @keyup.enter="loadLibrary"
+      />
+      <n-select v-model:value="orderBy" :options="ORDER_OPTIONS" style="width: 150px" @update:value="loadLibrary" />
+      <n-select v-model:value="learned" :options="LEARNED_OPTIONS" style="width: 140px" @update:value="loadLibrary" />
+      <n-button size="small" @click="loadLibrary">刷新</n-button>
+    </n-space>
+
+    <n-space v-else align="center" :size="10" style="margin-bottom: 14px" wrap>
+      <n-select v-model:value="zone" :options="ZONE_OPTIONS" style="width: 190px" @update:value="onZoneChange" />
+      <n-input v-model:value="q" placeholder="按标题/摘要过滤" style="width: 260px" clearable />
+      <n-select v-model:value="errSort" :options="ERR_SORT_OPTIONS" style="width: 170px" />
+      <n-select v-model:value="errLearned" :options="ERR_LEARNED_OPTIONS" style="width: 150px" />
+      <n-button size="small" @click="loadErrors">刷新</n-button>
+      <span class="kb-dim">
+        {{ filteredErrors.length }} / {{ errors.length }} 条 ·
+        {{ errors.filter((r) => !r.read).length }} 条未学习
+      </span>
     </n-space>
 
     <!-- ── 文档库 / 待学习 / 新闻 / GitHub 周报 ── -->
