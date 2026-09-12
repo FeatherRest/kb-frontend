@@ -1,29 +1,41 @@
 <template>
-  <n-grid :cols="3" x-gap="16">
-    <n-gi>
-      <n-card style="text-align:center;">
-        <n-statistic :value="stats?.documents ?? stats?.total_documents ?? 0" title="文档总数">
-          <template #prefix>📄</template>
-        </n-statistic>
-      </n-card>
-    </n-gi>
-    <n-gi>
-      <n-card style="text-align:center;">
-        <n-statistic :value="stats?.chunks ?? stats?.total_chunks ?? 0" title="文本块数">
-          <template #prefix>🧩</template>
-        </n-statistic>
-      </n-card>
-    </n-gi>
-    <n-gi>
-      <n-card style="text-align:center;">
-        <n-statistic :value="stats?.searches ?? stats?.total_searches ?? 0" title="搜索次数">
-          <template #prefix>🔍</template>
-        </n-statistic>
-      </n-card>
-    </n-gi>
-  </n-grid>
+  <n-card size="small" class="kb-stat" :bordered="true">
+    <div class="kb-stat-value">{{ display }}</div>
+    <div class="kb-stat-label">{{ label }}</div>
+  </n-card>
 </template>
 
 <script setup>
-defineProps({ stats: Object })
+import { computed } from 'vue'
+
+const props = defineProps({
+  label: { type: String, default: '' },
+  value: { type: [Number, String], default: 0 },
+  suffix: { type: String, default: '' },
+})
+
+const display = computed(() => {
+  const v = props.value
+  const n = typeof v === 'number' ? v.toLocaleString('zh-CN') : v
+  return `${n}${props.suffix}`
+})
 </script>
+
+<style scoped>
+.kb-stat {
+  background: #20203a;
+  border: 1px solid #2a2a3e;
+  min-width: 120px;
+}
+.kb-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #66ccff;
+  line-height: 1.3;
+}
+.kb-stat-label {
+  font-size: 12px;
+  color: #7f8fa4;
+  margin-top: 2px;
+}
+</style>

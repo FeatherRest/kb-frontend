@@ -1,72 +1,11 @@
 import { createApp } from 'vue'
-import {
-  NButton,
-  NCard,
-  NCollapse,
-  NCollapseItem,
-  NConfigProvider,
-  NDataTable,
-  NEmpty,
-  NForm,
-  NFormItem,
-  NGi,
-  NH2,
-  NIcon,
-  NInput,
-  NLayout,
-  NLayoutContent,
-  NLayoutHeader,
-  NMessageProvider,
-  NRadio,
-  NRadioButton,
-  NRadioGroup,
-  NGrid,
-  NStatistic,
-  NSpace,
-  NTag,
-  NTimeline,
-  NTimelineItem,
-  NUpload,
-  NUploadDragger,
-} from 'naive-ui'
-import router from './router'
+import naive from 'naive-ui'
 import { createPinia } from 'pinia'
+import router from './router'
 import App from './App.vue'
 
 const app = createApp(App)
-
-const components = [
-  NButton,
-  NCard,
-  NCollapse,
-  NCollapseItem,
-  NConfigProvider,
-  NDataTable,
-  NEmpty,
-  NForm,
-  NFormItem,
-  NGi,
-  NH2,
-  NIcon,
-  NInput,
-  NLayout,
-  NLayoutContent,
-  NLayoutHeader,
-  NMessageProvider,
-  NRadio,
-  NRadioButton,
-  NRadioGroup,
-  NGrid,
-  NStatistic,
-  NSpace,
-  NTag,
-  NTimeline,
-  NTimelineItem,
-  NUpload,
-  NUploadDragger,
-]
-
-components.forEach(component => app.use(component))
-app.use(router)
+app.use(naive)
 app.use(createPinia())
+app.use(router)
 app.mount('#app')

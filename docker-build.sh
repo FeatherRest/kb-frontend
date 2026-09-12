@@ -1,36 +1,28 @@
-#!/usr/bin/env bash
+# 构建与本地预览（可选路径）
+#
+# 注意：本机线上部署不走 Docker —— nginx 直接 alias dist/ 目录。
+# 这里保留容器化方式，供在别的机器上独立托管时使用。
+#
+# 用法：
+#   ./docker-build.sh            # 构建镜像
+#   ./docker-build.sh --run      # 构建并启动容器（8081 端口）
 set -euo pipefail
-
-# Docker 构建脚本 — kb-frontend
-# 使用 mihomo 代理加速 Docker Hub 下载
 
 CONTAINER_NAME="kb-frontend"
 IMAGE_NAME="kb-frontend"
 HOST_PORT=8081
 
-echo "📦 构建 Docker 镜像: ${IMAGE_NAME}"
-echo ""
+echo "📦 构建镜像 ${IMAGE_NAME}（base=/knowledge/）"
+docker build -t "${IMAGE_NAME}" .
 
-# 构建代理参数 (用于 build 阶段的 npm install)
-BUILD_ARGS=(
-  --build-arg HTTP_PROXY=http://host.docker.internal:7890
-  --build-arg HTTPS_PROXY=http://host.docker.internal:7890
-)
-
-# 尝试 Docker 构建
-docker build "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" .
-
-echo ""
-echo "✅ 构建成功!"
-
-# 停止旧容器
-docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
-
-# 运行新容器
-docker run -d \
-  --name "${CONTAINER_NAME}" \
-  -p "${HOST_PORT}:80" \
-  -e VITE_KB_API=http://host.docker.internal:9999 \
-  "${IMAGE_NAME}"
-
-echo "🚀 ${CONTAINER_NAME} running at http://localhost:${HOST_PORT}/"
+if [[ "${1:-}" == "--run" ]]; then
+  docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+  docker run -d \
+    --name "${CONTAINER_NAME}" \
+    -p "${HOST_PORT}:80" \
+    -e KB_API_UPSTREAM=http://host.docker.internal:9999 \
+    "${IMAGE_NAME}"
+  echo "🚀 ${CONTAINER_NAME} → http://localhost:${HOST_PORT}/knowledge/"
+else
+  echo "✅ 构建完成（未启动容器，加 --run 启动）"
+fi

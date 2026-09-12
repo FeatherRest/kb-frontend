@@ -1,21 +1,22 @@
 {
   "name": "kb-frontend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:check": "vite build --outDir dist-test --emptyOutDir",
     "preview": "vite preview",
     "test": "node --test"
   },
   "dependencies": {
-    "vue": "^3.4.0",
-    "naive-ui": "^2.38.0",
-    "vue-router": "^4.3.0",
-    "pinia": "^2.1.0",
+    "@vicons/ionicons5": "^0.12.0",
     "axios": "^1.6.0",
-    "@vicons/ionicons5": "^0.12.0"
+    "naive-ui": "^2.44.1",
+    "pinia": "^2.1.0",
+    "vue": "^3.4.0",
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
