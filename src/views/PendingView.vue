@@ -2,7 +2,7 @@
   <div>
     <div class="kb-page-title">待处理</div>
 
-    <n-space align="center" :size="10" style="margin-bottom: 14px" wrap>
+    <n-space class="kb-toolbar" align="center" :size="10" style="margin-bottom: 14px" wrap>
       <n-input
         v-model:value="q"
         placeholder="按相对路径过滤"
@@ -16,7 +16,26 @@
     </n-space>
 
     <n-spin :show="loading">
+      <!-- 手机端：卡片列表（6 列表格在窄屏不可用） -->
+      <n-space v-if="isMobile" vertical :size="10">
+        <n-card v-for="r in files" :key="r['相对路径']" size="small">
+          <div class="kb-card-title" :title="r['相对路径']">{{ r['相对路径'] }}</div>
+          <n-space :size="6" style="margin-top: 8px" wrap align="center">
+            <n-tag size="tiny" :bordered="false">{{ r['扩展名'] || '-' }}</n-tag>
+            <n-tag size="tiny" round :type="r['已索引'] === 'yes' ? 'success' : 'default'">
+              {{ r['已索引'] || 'no' }}
+            </n-tag>
+            <span class="kb-dim">{{ formatSize(r['大小(bytes)']) }} · {{ r['修改时间'] }}</span>
+          </n-space>
+          <n-space :size="8" class="kb-actions" style="margin-top: 10px">
+            <n-button size="small" tertiary @click="copy(r['绝对路径'])">复制绝对路径</n-button>
+            <n-button size="small" quaternary @click="copy(r['相对路径'])">复制相对路径</n-button>
+          </n-space>
+        </n-card>
+      </n-space>
+
       <n-data-table
+        v-else
         :columns="columns"
         :data="files"
         :bordered="true"
@@ -38,6 +57,7 @@
 import { h, onMounted, ref } from 'vue'
 import { NButton, NTag, useMessage } from 'naive-ui'
 import { getPendingFiles } from '../api/kbApi.js'
+import { useIsMobile } from '../composables/useIsMobile.js'
 
 const message = useMessage()
 
@@ -49,6 +69,9 @@ const page = ref(1)
 const total = ref(0)
 const totalPages = ref(1)
 const files = ref([])
+
+/** 手机端切换为卡片列表 */
+const { isMobile } = useIsMobile()
 const loading = ref(false)
 
 const columns = [

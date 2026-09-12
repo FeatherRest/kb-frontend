@@ -113,15 +113,15 @@ onMounted(() => {
 
 <style scoped>
 .kb-dragger {
-  background: #20203a;
-  border: 1px dashed #3a3a55;
+  background: #ffffff;
+  border: 1px dashed #d2d2d7;
   border-radius: 10px;
   padding: 18px;
   text-align: center;
 }
 .kb-drop-title {
   margin-top: 6px;
-  color: #dfe4f0;
+  color: #1d1d1f;
   font-size: 13px;
 }
 </style>

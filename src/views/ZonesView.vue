@@ -3,7 +3,7 @@
     <div class="kb-page-title">专区</div>
 
     <!-- 工具栏：两条分支各用一个 n-space（避免 v-if/v-else 片段在 n-space 插槽内被复用不替换） -->
-    <n-space v-if="zone !== 'errors'" align="center" :size="10" style="margin-bottom: 14px" wrap>
+    <n-space v-if="zone !== 'errors'" class="kb-toolbar" align="center" :size="10" style="margin-bottom: 14px" wrap>
       <n-select v-model:value="zone" :options="ZONE_OPTIONS" style="width: 190px" @update:value="onZoneChange" />
       <n-input
         v-model:value="q"
@@ -17,7 +17,7 @@
       <n-button size="small" @click="loadLibrary">刷新</n-button>
     </n-space>
 
-    <n-space v-else align="center" :size="10" style="margin-bottom: 14px" wrap>
+    <n-space v-else class="kb-toolbar" align="center" :size="10" style="margin-bottom: 14px" wrap>
       <n-select v-model:value="zone" :options="ZONE_OPTIONS" style="width: 190px" @update:value="onZoneChange" />
       <n-input v-model:value="q" placeholder="按标题/摘要过滤" style="width: 260px" clearable />
       <n-select v-model:value="errSort" :options="ERR_SORT_OPTIONS" style="width: 170px" />
@@ -124,7 +124,7 @@
         <iframe
           v-if="errHtml"
           :srcdoc="errHtml"
-          style="width: 100%; height: 62vh; border: 1px solid #2a2a3e; border-radius: 8px; background: #fff"
+          style="width: 100%; height: 62vh; border: 1px solid #e8e8ed; border-radius: 8px; background: #fff"
         ></iframe>
 
         <n-divider style="margin: 6px 0">评论</n-divider>
@@ -372,8 +372,8 @@ onMounted(loadLibrary)
 
 <style scoped>
 .kb-doc-card {
-  background: #20203a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
   cursor: pointer;
 }
 .kb-doc-head {
@@ -383,23 +383,23 @@ onMounted(loadLibrary)
 }
 .kb-doc-title {
   flex: 1;
-  color: #e6e6f5;
+  color: #1d1d1f;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .kb-err-unread {
-  border-left: 3px solid #66ccff;
+  border-left: 3px solid #0071e3;
 }
 .kb-err-missing {
   opacity: 0.55;
 }
 .kb-comment {
-  background: #20203a;
+  background: #ffffff;
   border-radius: 6px;
   padding: 8px 10px;
-  color: #d7dcea;
+  color: #3a3a3c;
   font-size: 13px;
 }
 </style>

@@ -2,7 +2,7 @@
   <div>
     <div class="kb-page-title">知识库管理</div>
 
-    <n-space align="center" :size="10" style="margin-bottom: 14px" wrap>
+    <n-space class="kb-toolbar" align="center" :size="10" style="margin-bottom: 14px" wrap>
       <n-button size="small" @click="load">刷新</n-button>
       <n-button size="small" type="primary" @click="openCreate">新建知识库</n-button>
       <span class="kb-dim">根目录：{{ rootPath }} · 共 {{ kbs.length }} 个知识库</span>
@@ -267,8 +267,8 @@ onMounted(load)
 
 <style scoped>
 .kb-kb-card {
-  background: #20203a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
 }
 .kb-kb-head {
   display: flex;
@@ -278,7 +278,7 @@ onMounted(load)
 }
 .kb-kb-name {
   font-weight: 600;
-  color: #e6e6f5;
+  color: #1d1d1f;
   font-size: 15px;
 }
 .kb-path {

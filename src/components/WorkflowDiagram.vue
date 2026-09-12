@@ -44,15 +44,15 @@ function isActive(stage) {
   gap: 6px;
 }
 .kb-stage {
-  background: #20203a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
   border-radius: 8px;
   padding: 8px 10px;
   min-width: 130px;
   max-width: 230px;
 }
 .kb-stage-active {
-  border-color: #66ccff;
+  border-color: #0071e3;
   box-shadow: 0 0 0 1px rgba(102, 204, 255, 0.35);
 }
 .kb-stage-role {
@@ -62,19 +62,19 @@ function isActive(stage) {
   border-radius: 8px;
   letter-spacing: 1px;
 }
-.kb-role-input { background: #17324d; color: #66ccff; }
-.kb-role-process { background: #2a2a3e; color: #b9c3d6; }
-.kb-role-branch { background: #4a3a17; color: #ffcc66; }
-.kb-role-output { background: #173d29; color: #66d9a0; }
+.kb-role-input { background: #e8f1fd; color: #0071e3; }
+.kb-role-process { background: #ffffff; color: #3a3a3c; }
+.kb-role-branch { background: #fff4e5; color: #ff9500; }
+.kb-role-output { background: #eaf8ee; color: #34c759; }
 .kb-stage-name {
   font-size: 12px;
-  color: #dfe4f0;
+  color: #1d1d1f;
   margin-top: 4px;
   font-weight: 600;
 }
 .kb-stage-desc {
   font-size: 10.5px;
-  color: #8b96a8;
+  color: #6e6e73;
   margin-top: 3px;
   line-height: 1.5;
   display: -webkit-box;
@@ -84,6 +84,6 @@ function isActive(stage) {
 }
 .kb-stage-arrow {
   align-self: center;
-  color: #4a4a68;
+  color: #6e6e73;
 }
 </style>

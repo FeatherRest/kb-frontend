@@ -23,19 +23,19 @@ const display = computed(() => {
 
 <style scoped>
 .kb-stat {
-  background: #20203a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
   min-width: 120px;
 }
 .kb-stat-value {
   font-size: 22px;
   font-weight: 700;
-  color: #66ccff;
+  color: #0071e3;
   line-height: 1.3;
 }
 .kb-stat-label {
   font-size: 12px;
-  color: #7f8fa4;
+  color: #6e6e73;
   margin-top: 2px;
 }
 </style>

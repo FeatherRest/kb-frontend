@@ -2,7 +2,7 @@
   <div>
     <div class="kb-page-title">计划表</div>
 
-    <n-space align="center" :size="10" style="margin-bottom: 14px" wrap>
+    <n-space class="kb-toolbar" align="center" :size="10" style="margin-bottom: 14px" wrap>
       <n-input v-model:value="filters.q" placeholder="按标题/描述搜索" style="width: 240px" clearable @keyup.enter="load" />
       <n-select v-model:value="filters.status" :options="statusOptions" style="width: 130px" @update:value="load" />
       <n-select v-model:value="filters.phase" :options="phaseOptions" style="width: 130px" @update:value="load" />
@@ -13,7 +13,55 @@
     </n-space>
 
     <n-spin :show="loading">
+      <!-- 手机端：卡片列表（7 列表格在窄屏不可用） -->
+      <n-space v-if="isMobile" vertical :size="10">
+        <n-card v-for="r in items" :key="r.id" size="small">
+          <div class="kb-card-title">
+            <n-tag size="tiny" :bordered="false">{{ r.id }}</n-tag>
+            <span :title="r.title">{{ r.title || '(无标题)' }}</span>
+          </div>
+          <n-space :size="6" style="margin-top: 8px" wrap align="center">
+            <n-tag
+              size="small"
+              round
+              :type="STATUS_TYPE[r.status] || 'default'"
+              style="cursor: pointer"
+              @click="cycle(r, 'status', STATUS)"
+            >
+              {{ r.status }}
+            </n-tag>
+            <n-tag size="small" round :bordered="false" style="cursor: pointer" @click="cycle(r, 'phase', PHASES)">
+              {{ r.phase || 'init' }}
+            </n-tag>
+            <n-tag v-if="r.category" size="tiny" :bordered="false">{{ r.category }}</n-tag>
+          </n-space>
+          <div class="kb-dim" style="margin-top: 6px">更新 {{ r.updated_at || '-' }}</div>
+          <n-space :size="8" class="kb-actions" style="margin-top: 10px">
+            <n-button size="small" tertiary @click="openEdit(r)">编辑</n-button>
+            <n-button
+              size="small"
+              quaternary
+              @click="
+                () => {
+                  current.value = r
+                  commentShow.value = true
+                }
+              "
+            >
+              评论 {{ (r.comments || []).length }}
+            </n-button>
+            <n-popconfirm @positive-click="remove(r)">
+              <template #trigger>
+                <n-button size="small" quaternary type="warning">删除</n-button>
+              </template>
+              确认删除 {{ r.id }}？
+            </n-popconfirm>
+          </n-space>
+        </n-card>
+      </n-space>
+
       <n-data-table
+        v-else
         :columns="columns"
         :data="items"
         :bordered="true"
@@ -97,6 +145,7 @@
 <script setup>
 import { h, onMounted, reactive, ref } from 'vue'
 import { NButton, NPopconfirm, NTag, useMessage } from 'naive-ui'
+import { useIsMobile } from '../composables/useIsMobile.js'
 import {
   addPlanComment,
   createPlan,
@@ -110,6 +159,9 @@ const message = useMessage()
 
 const STATUS = ['pending', 'in_progress', 'done', 'blocked']
 const PHASES = ['init', 'executing', 'archived']
+
+/** 手机端切换为卡片列表 */
+const { isMobile } = useIsMobile()
 const CATEGORIES = ['知识库', 'TTS', '工具', '基础设施', 'Bug修复', '模型', '项目管理']
 
 const STATUS_TYPE = {
@@ -339,10 +391,10 @@ onMounted(load)
 
 <style scoped>
 .kb-comment {
-  background: #20203a;
+  background: #ffffff;
   border-radius: 6px;
   padding: 8px 10px;
-  color: #d7dcea;
+  color: #3a3a3c;
   font-size: 13px;
 }
 </style>

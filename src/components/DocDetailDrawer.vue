@@ -341,12 +341,12 @@ function formatSize(bytes) {
   max-width: 60vw;
 }
 .kb-pre {
-  background: #16162a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
   border-radius: 8px;
   padding: 10px;
   font-size: 12px;
-  color: #c8d0e0;
+  color: #3a3a3c;
   max-height: 420px;
   overflow: auto;
   white-space: pre-wrap;
@@ -356,7 +356,7 @@ function formatSize(bytes) {
   max-height: 280px;
 }
 .kb-doc-body {
-  background: #fdfdfd;
+  background: #ffffff;
   color: #222;
   border-radius: 8px;
   padding: 16px 18px;
@@ -369,11 +369,11 @@ function formatSize(bytes) {
   max-width: 100%;
 }
 .kb-explain {
-  background: #20203a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
   border-radius: 8px;
   padding: 12px 14px;
-  color: #d7dcea;
+  color: #3a3a3c;
   line-height: 1.9;
   white-space: pre-wrap;
   font-size: 14px;
@@ -381,7 +381,7 @@ function formatSize(bytes) {
 .kb-audio {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid #2a2a3e;
+  border-top: 1px solid #e8e8ed;
 }
 .kb-audio audio {
   display: none;

@@ -2,9 +2,10 @@
   <div>
     <div class="kb-page-title">搜索</div>
 
-    <n-space :size="10" align="center" style="margin-bottom: 12px">
+    <n-space class="kb-toolbar" :size="10" align="center" style="margin-bottom: 12px">
       <n-input
         v-model:value="query"
+        class="kb-search-input"
         style="width: 460px"
         placeholder="输入自然语言问题 / 关键词，回车检索"
         clearable
@@ -18,7 +19,7 @@
       <n-select v-model:value="topK" :options="TOPK_OPTIONS" style="width: 110px" size="medium" />
     </n-space>
 
-    <n-space :size="8" align="center" style="margin-bottom: 14px" wrap>
+    <n-space class="kb-toolbar" :size="8" align="center" style="margin-bottom: 14px" wrap>
       <n-radio-group v-model:value="mode" size="small" @update:value="onModeChange">
         <n-radio-button value="hybrid">混合</n-radio-button>
         <n-radio-button value="dense">向量</n-radio-button>

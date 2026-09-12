@@ -1,0 +1,305 @@
+/* ═══════════════════════════════════════════════════════════════════
+ * Apple 简约白色主题 · 设计令牌与全局样式
+ * ---------------------------------------------------------------
+ * 配色（Apple 官方色板）：
+ *   背景 #f5f5f7 · 卡片 #ffffff · 文字 #1d1d1f / #6e6e73 · 分割线 #e8e8ed
+ *   强调 #0071e3（唯一强调色）· 成功 #34c759 · 警告 #ff9500 · 危险 #ff3b30
+ * 圆角：卡片 16px · 控件 8px · 标签胶囊
+ * 断点：≤768px 视为手机（侧边栏转抽屉、网格单列、表格转卡片）
+ * ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --kb-bg: #f5f5f7;
+  --kb-surface: #ffffff;
+  --kb-surface-2: #fbfbfd;
+  --kb-text: #1d1d1f;
+  --kb-text-2: #6e6e73;
+  --kb-text-3: #86868b;
+  --kb-border: #e8e8ed;
+  --kb-border-strong: #d2d2d7;
+  --kb-accent: #0071e3;
+  --kb-accent-soft: #e8f1fd;
+  --kb-success: #34c759;
+  --kb-warning: #ff9500;
+  --kb-danger: #ff3b30;
+  --kb-radius: 16px;
+  --kb-radius-sm: 8px;
+  --kb-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  --kb-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+  --kb-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'PingFang SC',
+    'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  --kb-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  background: var(--kb-bg);
+  color: var(--kb-text);
+  font-family: var(--kb-font);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── 通用文本工具类 ── */
+.kb-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--kb-text);
+  margin: 0 0 16px;
+}
+.kb-dim {
+  color: var(--kb-text-2);
+  font-size: 12.5px;
+}
+.kb-mono {
+  font-family: var(--kb-mono);
+  font-size: 12px;
+}
+.kb-pre {
+  font-family: var(--kb-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--kb-text);
+  background: var(--kb-surface-2);
+  border: 1px solid var(--kb-border);
+  border-radius: var(--kb-radius-sm);
+  padding: 12px;
+  max-height: 60vh;
+  overflow: auto;
+}
+
+/* ── 列表卡片标题（手机端卡片列表复用）── */
+.kb-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--kb-text);
+  line-height: 1.45;
+}
+.kb-card-title > span:last-child {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+/* ── 卡片：白底 + 细边 + 极淡阴影 ── */
+.n-card {
+  background: var(--kb-surface) !important;
+  border: 1px solid var(--kb-border) !important;
+  border-radius: var(--kb-radius) !important;
+  box-shadow: var(--kb-shadow) !important;
+}
+.n-card > .n-card-header {
+  border-bottom: 1px solid var(--kb-border);
+}
+.n-card-header__main,
+.n-card__header {
+  color: var(--kb-text) !important;
+  font-weight: 600 !important;
+}
+
+/* ── 按钮：8px 圆角 + 按下微缩 ── */
+.n-button {
+  border-radius: var(--kb-radius-sm) !important;
+  transition: transform 0.12s ease, background-color 0.16s ease !important;
+}
+.n-button:active {
+  transform: scale(0.97);
+}
+
+/* ── 输入类控件 ── */
+.n-input,
+.n-base-selection,
+.n-input-number,
+.n-date-picker {
+  border-radius: var(--kb-radius-sm) !important;
+}
+.n-input:not(.n-input--disabled),
+.n-base-selection {
+  background: var(--kb-surface) !important;
+}
+
+/* ── 标签：胶囊形 ── */
+.n-tag {
+  border-radius: 100px !important;
+}
+
+/* ── 标签页：Apple 分段控件 ── */
+.n-tabs .n-tabs-nav {
+  background: var(--kb-bg);
+  border-radius: 12px;
+  padding: 4px;
+}
+.n-tabs .n-tabs-tab {
+  border-radius: var(--kb-radius-sm) !important;
+  padding: 6px 14px !important;
+  font-weight: 500;
+}
+.n-tabs .n-tabs-tab.n-tabs-tab--active {
+  background: var(--kb-surface);
+  color: var(--kb-accent) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.n-tabs .n-tabs-bar {
+  display: none;
+}
+
+/* ── 表格：白底、细分割线 ── */
+.n-data-table .n-data-table-th {
+  background: var(--kb-surface-2) !important;
+  color: var(--kb-text-2) !important;
+  font-weight: 600 !important;
+  border-color: var(--kb-border) !important;
+}
+.n-data-table .n-data-table-td {
+  border-color: var(--kb-border) !important;
+}
+.n-data-table .n-data-table-tr:hover .n-data-table-td {
+  background: var(--kb-surface-2) !important;
+}
+
+/* ── 弹窗 / 抽屉 ── */
+.n-modal.n-card,
+.n-drawer {
+  border-radius: 20px !important;
+  box-shadow: var(--kb-shadow-lg) !important;
+  background: var(--kb-surface) !important;
+}
+.n-modal-mask,
+.n-drawer-mask {
+  background: rgba(0, 0, 0, 0.32) !important;
+}
+
+/* ── 折叠面板 / 提示 ── */
+.n-collapse-item__header {
+  color: var(--kb-text) !important;
+}
+.n-alert {
+  border-radius: 12px !important;
+}
+
+/* ── 滚动条 & 选中色 ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c7c7cc;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::selection {
+  background: var(--kb-accent);
+  color: #fff;
+}
+
+/* 正文里的链接（限定范围，避免影响导航） */
+.kb-pre a,
+.n-card a,
+.n-descriptions a {
+  color: var(--kb-accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 手机端适配（≤768px）
+ * ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* 触控目标：按钮 / 开关 / 可选行 ≥44px */
+  .n-button:not(.n-button--tiny):not(.n-button--small),
+  .n-button.n-button--small {
+    min-height: 40px;
+    padding: 0 14px;
+  }
+  .kb-touch-row .n-button,
+  .kb-actions .n-button {
+    min-height: 44px;
+  }
+  /* 输入框字号 16px：避免 iOS 聚焦自动放大 */
+  .n-input .n-input__input-el,
+  .n-input .n-input__textarea-el,
+  .n-base-selection-input__content,
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+  /* 内边距收窄、网格单列 */
+  .kb-content-pad {
+    padding: 12px !important;
+  }
+  .n-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* 工具栏控件取消固定像素、铺满一行 */
+  .kb-toolbar > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .kb-toolbar .n-input,
+  .kb-toolbar .n-select,
+  .kb-toolbar .n-base-selection {
+    width: 100% !important;
+  }
+  /* 表格容器横向滚动，不撑破页面 */
+  .n-data-table .n-data-table-base-table-body,
+  .n-data-table .n-data-table-base-table-header {
+    overflow-x: auto !important;
+  }
+  .n-data-table .n-data-table-table {
+    min-width: 640px;
+  }
+  .n-data-table .n-data-table-td,
+  .n-data-table .n-data-table-th {
+    padding: 10px 8px !important;
+    font-size: 13px;
+  }
+  /* 弹窗 / 抽屉：手机上占满宽度 */
+  .n-modal {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    margin: 12px auto !important;
+  }
+  .n-drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  .n-drawer.n-drawer--left {
+    width: 78vw !important;
+    max-width: 320px !important;
+  }
+  /* 页面标题与说明 */
+  .kb-page-title {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+  /* 卡片收紧 */
+  .n-card {
+    border-radius: 14px !important;
+  }
+  .n-card > .n-card__content {
+    padding: 14px !important;
+  }
+  /* 刘海屏安全区 */
+  .kb-content-pad {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* 平板（769–1024px）：网格两列 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .n-grid.kb-grid-2 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}

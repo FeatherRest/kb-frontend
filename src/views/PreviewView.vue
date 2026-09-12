@@ -251,28 +251,28 @@ function formatSize(bytes) {
 
 <style scoped>
 .kb-card {
-  background: #20203a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
 }
 .kb-dragger {
-  background: #1b1b31;
-  border: 1px dashed #3a3a55;
+  background: #f5f5f7;
+  border: 1px dashed #d2d2d7;
   border-radius: 10px;
   padding: 18px;
   text-align: center;
 }
 .kb-drop-title {
   margin-top: 6px;
-  color: #dfe4f0;
+  color: #1d1d1f;
   font-size: 13px;
 }
 .kb-pre {
-  background: #16162a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
   border-radius: 8px;
   padding: 10px;
   font-size: 12px;
-  color: #c8d0e0;
+  color: #3a3a3c;
   max-height: 60vh;
   overflow: auto;
   white-space: pre-wrap;

@@ -113,8 +113,8 @@ async function copyDocId() {
 
 <style scoped>
 .kb-result {
-  background: #20203a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
 }
 .kb-result-head {
   display: flex;
@@ -124,13 +124,13 @@ async function copyDocId() {
 .kb-result-title {
   flex: 1;
   font-weight: 600;
-  color: #e6e6f5;
+  color: #1d1d1f;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .kb-snippet {
-  color: #b9c3d6;
+  color: #3a3a3c;
   font-size: 13px;
   line-height: 1.7;
   white-space: pre-wrap;
@@ -148,8 +148,8 @@ async function copyDocId() {
   max-width: 320px;
 }
 :deep(.kb-mark) {
-  background: #ffe08a;
-  color: #1a1a2e;
+  background: #fff6d6;
+  color: #1d1d1f;
   border-radius: 3px;
   padding: 0 2px;
 }

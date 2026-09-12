@@ -336,7 +336,7 @@ onMounted(load)
 
 <style scoped>
 .kb-card {
-  background: #20203a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
 }
 </style>

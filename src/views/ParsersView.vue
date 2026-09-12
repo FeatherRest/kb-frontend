@@ -2,7 +2,7 @@
   <div>
     <div class="kb-page-title">解析器</div>
 
-    <n-space align="center" :size="10" style="margin-bottom: 14px" wrap>
+    <n-space class="kb-toolbar" align="center" :size="10" style="margin-bottom: 14px" wrap>
       <n-input v-model:value="q" placeholder="按名称 / 引擎 / 扩展名过滤" style="width: 280px" clearable />
       <n-select v-model:value="category" :options="categoryOptions" style="width: 160px" />
       <n-button size="small" :loading="loading" @click="load">刷新</n-button>
@@ -142,8 +142,8 @@ onMounted(load)
 
 <style scoped>
 .kb-parser-card {
-  background: #20203a;
-  border: 1px solid #2a2a3e;
+  background: #ffffff;
+  border: 1px solid #e8e8ed;
 }
 .kb-parser-off {
   opacity: 0.6;
@@ -156,11 +156,11 @@ onMounted(load)
 }
 .kb-parser-name {
   font-weight: 600;
-  color: #e6e6f5;
+  color: #1d1d1f;
 }
 .kb-parser-note {
   font-size: 12px;
-  color: #9aa7bd;
+  color: #6e6e73;
   line-height: 1.6;
 }
 </style>
