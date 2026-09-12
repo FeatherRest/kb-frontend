@@ -103,9 +103,11 @@ export const reportHtmlUrl = (relPath) =>
   `${KB_API_BASE}/v1/report-html?path=${encodeURIComponent(relPath)}`
 
 /* ── 摄取 / 上传 ── */
-export function ingestFile(file) {
+export function ingestFile(file, kbId = 'default') {
   const body = new FormData()
   body.append('file', file)
+  // 目标知识库（缺省 default → 服务端按注册表解析投递目录）
+  if (kbId) body.append('kb_id', kbId)
   return unwrap(
     http.post('/v1/ingest/file', body, {
       headers: { 'Content-Type': 'multipart/form-data' },

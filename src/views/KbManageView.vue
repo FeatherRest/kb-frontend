@@ -8,6 +8,17 @@
       <span class="kb-dim">根目录：{{ rootPath }} · 共 {{ kbs.length }} 个知识库</span>
     </n-space>
 
+    <n-card size="small" class="kb-kb-card" style="margin-bottom: 14px">
+      <div class="kb-kb-head" style="margin-bottom: 4px">
+        <span class="kb-kb-name">📥 投递文件</span>
+        <n-tag size="tiny" round :bordered="false">自动解析 → 归属到所选知识库</n-tag>
+      </div>
+      <div class="kb-dim" style="margin-bottom: 10px">
+        选择目标知识库后拖入文件：文件进入该库的 inbox，解析产物落到该库的 parsed/；不选则投递到 <b>default</b>。
+      </div>
+      <FileUploader v-model:kb-id="uploadKb" @uploaded="onUploaded" />
+    </n-card>
+
     <n-spin :show="loading">
       <n-grid :cols="2" :x-gap="12" :y-gap="12">
         <n-grid-item v-for="kb in kbs" :key="kb.kb_id">
@@ -30,12 +41,19 @@
               <n-tag size="tiny" round :type="kb.git_enabled ? 'success' : 'default'">
                 {{ kb.git_enabled ? 'Git 已启用' : '无 Git' }}
               </n-tag>
+              <n-tag v-if="kb.git_status?.is_repo" size="tiny" round :bordered="false">
+                {{ kb.git_status.commits }} 次提交
+              </n-tag>
+              <n-tag v-if="kb.git_status?.is_repo && kb.git_status.dirty_count" size="tiny" round type="warning">
+                {{ kb.git_status.dirty_count }} 个改动未提交
+              </n-tag>
               <n-tag v-if="kb.git_remote" size="tiny" round :bordered="false">远端已配</n-tag>
             </n-space>
 
             <div v-if="kb.description" class="kb-dim" style="margin-bottom: 8px">{{ kb.description }}</div>
 
             <n-space :size="8">
+              <n-button size="tiny" type="primary" ghost @click="useAsUploadTarget(kb)">投递到此库</n-button>
               <n-button size="tiny" tertiary @click="goConfig(kb.kb_id)">配置</n-button>
               <n-button size="tiny" quaternary @click="copy(kb.root_path)">复制路径</n-button>
               <n-popconfirm v-if="kb.kb_id !== 'default'" @positive-click="remove(kb, false)">
@@ -107,6 +125,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useMessage } from 'naive-ui'
 import { useRouter } from 'vue-router'
 import { createKb, deleteKb, listKbs } from '../api/kbApi.js'
+import FileUploader from '../components/FileUploader.vue'
 
 const message = useMessage()
 const router = useRouter()
@@ -114,6 +133,8 @@ const router = useRouter()
 const kbs = ref([])
 const rootPath = ref('/srv/sage-data/knowledge/kbs')
 const loading = ref(false)
+/** 上传目标知识库（缺省 default） */
+const uploadKb = ref('default')
 const createShow = ref(false)
 const creating = ref(false)
 const createError = ref('')
@@ -212,6 +233,18 @@ async function remove(kb, purge) {
 
 function goConfig(kbId) {
   router.push(`/kbs/${kbId}/config`)
+}
+
+/** 把该 KB 设为上传目标，并回到页面顶部的投递区 */
+function useAsUploadTarget(kb) {
+  uploadKb.value = kb.kb_id
+  message.info(`投递目标已切换为「${kb.name}」，请在上方拖入文件`)
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+/** 投递成功：刷新列表让文档数/提交数即时更新 */
+function onUploaded() {
+  load()
 }
 
 async function copy(text) {
