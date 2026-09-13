@@ -127,6 +127,25 @@
             </n-space>
           </n-card>
 
+          <!-- ── 内容浏览 ── -->
+          <n-card size="small" title="内容浏览" class="kb-card" style="margin-top: 14px">
+            <n-alert type="info" :show-icon="true" style="margin-bottom: 12px">
+              浏览页（知识库管理 →「浏览内容」）默认隐藏下面这些目录/文件。每行一条，支持 <code>*</code> 通配
+              （例如 <code>*.lock</code>）。运行时大目录（pending / qdrant-server 等）默认已列出，建议保留。
+            </n-alert>
+            <n-input
+              v-model:value="cfg.browse_ignore_text"
+              type="textarea"
+              :rows="10"
+              placeholder="每行一个忽略项"
+              style="font-family: var(--kb-mono)"
+            />
+            <n-space justify="end" style="margin-top: 10px">
+              <n-button size="small" quaternary @click="resetBrowseIgnore">恢复默认名单</n-button>
+              <n-button size="small" type="primary" :loading="savingCfg" @click="saveBrowseIgnore">保存忽略名单</n-button>
+            </n-space>
+          </n-card>
+
           <!-- ── 危险操作 ── -->
           <n-card v-if="!isDefault" size="small" title="危险操作" class="kb-card" style="margin-top: 14px">
             <n-space align="center" :size="10" wrap>
@@ -189,6 +208,15 @@ const STRATEGY_OPTIONS = [
   { label: 'sentence（句子）', value: 'sentence' },
 ]
 
+/** 与后端 DEFAULT_CONFIG.browse_ignore 保持一致的默认忽略名单（「恢复默认名单」用） */
+const DEFAULT_BROWSE_IGNORE = [
+  '.git', '.gitignore', '.processed', '.DS_Store', 'Thumbs.db',
+  '__pycache__', 'node_modules', '.venv', 'venv', '*.pyc', '*.lock', '*.tmp',
+  'pending', 'broadcast-audio', 'qdrant-server', 'testzone', 'backups',
+  'manifests', 'indexes', 'staging', 'quarantine', 'rejected', 'web',
+  'kb.db', 'meta.db', 'metadata.db', 'bm25_vocab.json', 'bm25_vocab.lock',
+]
+
 const folderInfo = ref({ exists: false, entries: 0, subdirs: [] })
 
 async function load() {
@@ -205,6 +233,7 @@ async function load() {
     gitForm.git_branch = data.git_branch || 'main'
     gitForm.git_remote = data.git_remote || ''
     Object.assign(cfg, data.config || {})
+    cfg.browse_ignore_text = (data.config?.browse_ignore || []).join('\n')
     defaults.value = data.config || {}
     folderInfo.value = data.folder_info || { exists: false, entries: 0, subdirs: [] }
   } catch (e) {
@@ -287,14 +316,40 @@ async function loadGit() {
 async function saveConfig() {
   savingCfg.value = true
   try {
-    const r = await updateKbConfig(kbId.value, { config: { ...cfg } })
+    const payload = { ...cfg }
+    delete payload.browse_ignore_text
+    delete payload.browse_ignore
+    const r = await updateKbConfig(kbId.value, { config: payload })
     Object.assign(cfg, r.config || {})
+    cfg.browse_ignore_text = (r.config?.browse_ignore || []).join('\n')
     message.success('运行配置已保存')
   } catch (e) {
     message.error(e.message)
   } finally {
     savingCfg.value = false
   }
+}
+
+/** 保存「内容浏览」忽略名单（textarea 每行一条 → 数组） */
+async function saveBrowseIgnore() {
+  savingCfg.value = true
+  try {
+    const list = String(cfg.browse_ignore_text || '')
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    const r = await updateKbConfig(kbId.value, { config: { browse_ignore: list } })
+    cfg.browse_ignore_text = (r.config?.browse_ignore || []).join('\n')
+    message.success(`忽略名单已保存（${list.length} 项）`)
+  } catch (e) {
+    message.error(e.message)
+  } finally {
+    savingCfg.value = false
+  }
+}
+
+function resetBrowseIgnore() {
+  cfg.browse_ignore_text = DEFAULT_BROWSE_IGNORE.join('\n')
 }
 
 function resetConfig() {

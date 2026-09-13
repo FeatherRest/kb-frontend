@@ -192,7 +192,7 @@ const menuOptions = MENU.map((m) => ({
 
 const activeKey = computed(() => {
   const name = String(route.name || '')
-  if (name === 'KbConfig') return 'Kbs'
+  if (name === 'KbConfig' || name === 'KbDetail') return 'Kbs'
   return name || 'Search'
 })
 

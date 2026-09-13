@@ -15,6 +15,12 @@ const routes = [
   { path: '/plan', name: 'Plan', component: () => import('../views/PlanView.vue'), meta: { title: '计划表' } },
   { path: '/kbs', name: 'Kbs', component: () => import('../views/KbManageView.vue'), meta: { title: '知识库管理' } },
   {
+    path: '/kbs/:id',
+    name: 'KbDetail',
+    component: () => import('../views/KbDetailView.vue'),
+    meta: { title: '知识库' },
+  },
+  {
     path: '/kbs/:id/config',
     name: 'KbConfig',
     component: () => import('../views/KbConfigView.vue'),

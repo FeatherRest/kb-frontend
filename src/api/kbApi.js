@@ -171,3 +171,27 @@ export const updateKbConfig = (kbId, payload) =>
 export const initKbGit = (kbId) => unwrap(http.post(`/kbs/${encodeURIComponent(kbId)}/git-init`, {}))
 export const getKbGitStatus = (kbId) =>
   unwrap(http.get(`/kbs/${encodeURIComponent(kbId)}/git-status`))
+
+/* ── 知识库内容浏览（只读）── */
+export const listKbTree = (kbId, { path = '', showAll = false } = {}) =>
+  unwrap(http.get(`/kbs/${encodeURIComponent(kbId)}/tree`, { params: { path, show_all: showAll ? 1 : 0 } }))
+
+export const previewKbFile = (kbId, path) =>
+  unwrap(http.get(`/kbs/${encodeURIComponent(kbId)}/file`, { params: { path } }))
+
+export const getKbOverview = (kbId, path = '', showAll = false) =>
+  unwrap(http.get(`/kbs/${encodeURIComponent(kbId)}/overview`, { params: { path, show_all: showAll ? 1 : 0 } }))
+
+/** 生成 OV 风格目录摘要（L0+L1），本地模型较慢，给足超时 */
+export const generateKbOverview = (kbId, { path = '', force = true, showAll = false } = {}) =>
+  unwrap(
+    http.post(
+      `/kbs/${encodeURIComponent(kbId)}/overview`,
+      { path, force, show_all: showAll },
+      { timeout: 900000 },
+    ),
+  )
+
+/** 原始文件 URL（图片 / PDF 直出用，只读） */
+export const kbRawUrl = (kbId, path) =>
+  `${KB_API_BASE}/kbs/${encodeURIComponent(kbId)}/raw?path=${encodeURIComponent(path)}`

@@ -22,7 +22,7 @@
     <n-spin :show="loading">
       <n-grid :cols="2" :x-gap="12" :y-gap="12">
         <n-grid-item v-for="kb in kbs" :key="kb.kb_id">
-          <n-card size="small" class="kb-kb-card">
+          <n-card size="small" class="kb-kb-card kb-kb-item">
             <div class="kb-kb-head">
               <span class="kb-kb-name">{{ kb.name }}</span>
               <n-tag size="tiny" round :bordered="false">{{ kb.kb_id }}</n-tag>
@@ -53,6 +53,7 @@
             <div v-if="kb.description" class="kb-dim" style="margin-bottom: 8px">{{ kb.description }}</div>
 
             <n-space :size="8">
+              <n-button size="tiny" type="primary" ghost @click="goDetail(kb.kb_id)">浏览内容</n-button>
               <n-button size="tiny" type="primary" ghost @click="useAsUploadTarget(kb)">投递到此库</n-button>
               <n-button size="tiny" tertiary @click="goConfig(kb.kb_id)">配置</n-button>
               <n-button size="tiny" quaternary @click="copy(kb.root_path)">复制路径</n-button>
@@ -239,6 +240,11 @@ async function remove(kb, purge) {
 
 function goConfig(kbId) {
   router.push(`/kbs/${kbId}/config`)
+}
+
+/** 进入内容浏览页 */
+function goDetail(kbId) {
+  router.push(`/kbs/${kbId}`)
 }
 
 /** 把该 KB 设为上传目标，并回到页面顶部的投递区 */
