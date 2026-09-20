@@ -48,12 +48,14 @@ export function searchKB({
   category = '',
   chunk_type = '',
   rerank = null,
+  kb_id = '',
 } = {}) {
   const body = { q, top_k, mode }
   if (scope) body.scope = scope
   if (category) body.category = category
   if (chunk_type) body.chunk_type = chunk_type
   if (rerank !== null && rerank !== undefined) body.rerank = rerank
+  if (kb_id) body.kb_id = kb_id
   return unwrap(http.post('/v1/search', body))
 }
 
@@ -103,11 +105,30 @@ export const reportHtmlUrl = (relPath) =>
   `${KB_API_BASE}/v1/report-html?path=${encodeURIComponent(relPath)}`
 
 /* ── 摄取 / 上传 ── */
-export function ingestFile(file, kbId = 'default') {
+/**
+ * 上传文件并提交摄取。
+ * @param file      浏览器 File 对象
+ * @param kbId      目标知识库
+ * @param chunkStrategy 分段方式（'' / 'auto' = 交给解析器判断）
+ * @param chunkSize     分段长度（字符，128-8192）
+ * @param chunkOverlap  段间重叠（字符，需 < chunkSize）
+ * 传了分段参数 → 服务端写进 sidecar，解析/入库时优先使用（预览与入库同口径）。
+ */
+export function ingestFile(
+  file,
+  kbId = 'default',
+  { chunkStrategy = '', chunkDelimiter = '', chunkSize = null, chunkOverlap = null } = {},
+) {
   const body = new FormData()
   body.append('file', file)
   // 目标知识库（缺省 default → 服务端按注册表解析投递目录）
   if (kbId) body.append('kb_id', kbId)
+  if (chunkStrategy && chunkStrategy !== 'auto') body.append('chunk_strategy', chunkStrategy)
+  if (chunkDelimiter) body.append('chunk_delimiter', chunkDelimiter)
+  if (chunkSize) body.append('chunk_size', String(chunkSize))
+  if (chunkOverlap !== null && chunkOverlap !== undefined && chunkOverlap !== '') {
+    body.append('chunk_overlap', String(chunkOverlap))
+  }
   return unwrap(
     http.post('/v1/ingest/file', body, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -115,6 +136,58 @@ export function ingestFile(file, kbId = 'default') {
     }),
   )
 }
+
+/* ── 导入向导：分段预览（与入库同一套分段逻辑，不落库）── */
+export function previewChunks({
+  filename,
+  content,
+  kbId = '',
+  chunkStrategy = '',
+  chunkDelimiter = '',
+  chunkSize = null,
+  chunkOverlap = null,
+}) {
+  const body = { filename, content }
+  // kb_id 必传：后端用它取"知识库配置"里的分段默认值，决定没显式填参数时按什么切
+  if (kbId) body.kb_id = kbId
+  if (chunkStrategy && chunkStrategy !== 'auto') body.chunk_strategy = chunkStrategy
+  // ⚠️ 分隔符必须一起传：后端在 strategy=delimiter 且缺分隔符时会直接 400
+  if (chunkDelimiter) body.chunk_delimiter = chunkDelimiter
+  if (chunkSize) body.chunk_size = chunkSize
+  if (chunkOverlap !== null && chunkOverlap !== undefined && chunkOverlap !== '') {
+    body.chunk_overlap = chunkOverlap
+  }
+  return unwrap(http.post('/v1/ingest/preview-chunks', body, { timeout: 300000 }))
+}
+
+/* ── 逆向：删除知识库里的文件（含索引 + 原件 + 解析产物）── */
+export const deleteKbFile = (kbId, path, { mode = 'trash', dryRun = false } = {}) =>
+  unwrap(
+    http.post(`/kbs/${encodeURIComponent(kbId)}/file-delete`, {
+      path,
+      mode,
+      dry_run: dryRun,
+    }),
+  )
+
+/** 按 doc_id 删除（「已入库文档」列表入口） */
+export const deleteKbFileDocId = (kbId, docId, { mode = 'trash', dryRun = false } = {}) =>
+  unwrap(
+    http.post(`/kbs/${encodeURIComponent(kbId)}/file-delete`, {
+      doc_id: docId,
+      mode,
+      dry_run: dryRun,
+    }),
+  )
+
+/** 按知识库列文档（知识库详情页的「已入库文档」列表） */
+export const listKbDocuments = (kbId, { page = 1, per_page = 50, q = '', includeDeleted = false } = {}) =>
+  unwrap(
+    http.get('/v1/documents', {
+      params: { kb_id: kbId, page, per_page, q, include_deleted: includeDeleted ? 1 : 0 },
+    }),
+  )
+
 
 /** 上传到「待学习」：base64 JSON，服务端解析 → 四件套入库 → 触发摄取 */
 export const uploadToLearn = ({ filename, content }) =>
@@ -178,6 +251,23 @@ export const listKbTree = (kbId, { path = '', showAll = false } = {}) =>
 
 export const previewKbFile = (kbId, path) =>
   unwrap(http.get(`/kbs/${encodeURIComponent(kbId)}/file`, { params: { path } }))
+
+/* ── 文件台账（P28-B：投递文件 + 状态 + 解析信息 + 搜索/排序/过滤/分页）── */
+export const getKbFiles = (kbId, { q = '', status = '', sort = 'updated', order = 'desc',
+  page = 1, perPage = 50, includeDeleted = false } = {}) =>
+  unwrap(http.get(`/kbs/${encodeURIComponent(kbId)}/files`, {
+    params: { q, status, sort, order, page, per_page: perPage, include_deleted: includeDeleted ? 1 : 0 },
+  }))
+
+/* ── 回收站（P28-A：统计 + 按保留天数清理）── */
+export const getKbTrash = (kbId) =>
+  unwrap(http.get(`/kbs/${encodeURIComponent(kbId)}/trash`))
+
+export const purgeKbTrash = (kbId, { days = null, confirm = false } = {}) => {
+  const body = { confirm }
+  if (days !== null && days !== undefined) body.days = days
+  return unwrap(http.post(`/kbs/${encodeURIComponent(kbId)}/trash-purge`, body, { timeout: 300000 }))
+}
 
 export const getKbOverview = (kbId, path = '', showAll = false) =>
   unwrap(http.get(`/kbs/${encodeURIComponent(kbId)}/overview`, { params: { path, show_all: showAll ? 1 : 0 } }))

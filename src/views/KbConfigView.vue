@@ -30,7 +30,7 @@
           <n-card size="small" title="文件夹" class="kb-card" style="margin-top: 14px">
             <n-form label-placement="left" label-width="96">
               <n-form-item label="路径">
-                <n-input v-model:value="folder.path" :disabled="isDefault" />
+                <n-input v-model:value="folder.path" :disabled="isSystemKb || !kb" />
               </n-form-item>
             </n-form>
             <n-space :size="8" align="center" wrap>
@@ -41,7 +41,7 @@
                 {{ folderInfo.entries }} 项
               </n-tag>
               <n-button size="tiny" quaternary @click="copy(folder.path)">复制路径</n-button>
-              <n-button size="small" tertiary :disabled="isDefault || folder.path === kb?.root_path" :loading="savingFolder" @click="saveFolder">
+              <n-button size="small" tertiary :disabled="isSystemKb || !kb || folder.path === kb?.root_path" :loading="savingFolder" @click="saveFolder">
                 迁移路径
               </n-button>
             </n-space>
@@ -95,6 +95,12 @@
             <n-form label-placement="left" label-width="130">
               <n-form-item label="分段策略">
                 <n-select v-model:value="cfg.chunk_strategy" :options="STRATEGY_OPTIONS" style="width: 200px" />
+                <template #feedback>
+                  <span class="chunk-hint">
+                    本库默认分段：<b>之后导入</b>的文档按这里的参数切（预览也会显示同一套参数）。
+                    已入库文档不会自动重切。
+                  </span>
+                </template>
               </n-form-item>
               <n-form-item label="分块大小">
                 <n-input-number v-model:value="cfg.chunk_size" :min="64" :max="4096" :step="64" style="width: 160px" />
@@ -120,11 +126,56 @@
               <n-form-item label="Git 自动提交">
                 <n-switch v-model:value="cfg.git_auto_commit" size="small" />
               </n-form-item>
+              <n-form-item label="回收站保留天数">
+                <n-input-number v-model:value="cfg.trash_retention_days" :min="0" :max="3650" :step="5"
+                                style="width: 160px" />
+                <span class="kb-dim" style="margin-left: 8px">超过该天数的回收站条目由每日 04:20 的任务清理（0 = 全部清空）</span>
+              </n-form-item>
             </n-form>
             <n-space justify="end">
               <n-button size="small" quaternary @click="resetConfig">恢复默认</n-button>
               <n-button size="small" type="primary" :loading="savingCfg" @click="saveConfig">保存配置</n-button>
             </n-space>
+          </n-card>
+
+          <!-- ── 回收站（P28-A：30 天自动清理 + 立即清理）── -->
+          <n-card size="small" class="kb-card" style="margin-top: 14px">
+            <template #header>
+              <div class="kb-card-head">
+                <span>回收站</span>
+                <n-tag size="tiny" round :bordered="false" type="info">
+                  保留 {{ trash?.retention_days ?? 30 }} 天
+                </n-tag>
+              </div>
+            </template>
+            <template #header-extra>
+              <n-space :size="8" align="center">
+                <n-button size="small" quaternary :loading="loadingTrash" @click="loadTrash">刷新</n-button>
+                <n-button size="small" tertiary :loading="purging" @click="doPurge">立即清理</n-button>
+              </n-space>
+            </template>
+            <n-spin :show="loadingTrash">
+              <n-descriptions :column="isMobile ? 2 : 4" size="small" label-placement="top" bordered>
+                <n-descriptions-item label="条目">{{ trash?.entries ?? '—' }}</n-descriptions-item>
+                <n-descriptions-item label="占用">{{ fmtBytes(trash?.bytes) }}</n-descriptions-item>
+                <n-descriptions-item label="已过期">
+                  <n-tag size="tiny" :bordered="false" :type="(trash?.expired_entries || 0) ? 'warning' : 'default'">
+                    {{ trash?.expired_entries ?? 0 }} 条 / {{ fmtBytes(trash?.expired_bytes) }}
+                  </n-tag>
+                </n-descriptions-item>
+                <n-descriptions-item label="位置">{{ trash?.root || '—' }}</n-descriptions-item>
+              </n-descriptions>
+              <n-alert v-if="trash?.unparsable?.length" type="warning" :show-icon="true" style="margin-top: 10px">
+                名字无法解析的目录不会被清理：{{ trash.unparsable.join('、') }}
+              </n-alert>
+              <div v-if="trash?.items?.length" class="kb-dim" style="margin-top: 10px; font-size: 12px">
+                最早一条：{{ trash.items[trash.items.length - 1].name }}（{{ trash.items[trash.items.length - 1].age_days }} 天前）
+              </div>
+              <div class="kb-dim" style="margin-top: 6px; font-size: 12px">
+                每天 04:20 由 <span class="kb-mono">kb-trash-purge.timer</span> 自动清理超过保留天数的条目；
+                「立即清理」会先预演清单，确认后才真删。
+              </div>
+            </n-spin>
           </n-card>
 
           <!-- ── 内容浏览 ── -->
@@ -147,7 +198,7 @@
           </n-card>
 
           <!-- ── 危险操作 ── -->
-          <n-card v-if="!isDefault" size="small" title="危险操作" class="kb-card" style="margin-top: 14px">
+          <n-card v-if="!isSystemKb" size="small" title="危险操作" class="kb-card" style="margin-top: 14px">
             <n-space align="center" :size="10" wrap>
               <n-checkbox v-model:checked="purge">同时删除文件夹（不可恢复）</n-checkbox>
               <n-popconfirm @positive-click="doDelete">
@@ -174,14 +225,19 @@ import {
   initKbGit,
   updateKb,
   updateKbConfig,
+  getKbTrash,
+  purgeKbTrash,
 } from '../api/kbApi.js'
+import { useIsMobile } from '../composables/useIsMobile.js'
 
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
 
+const { isMobile } = useIsMobile()
 const kbId = computed(() => String(route.params.id || ''))
-const isDefault = computed(() => kbId.value === 'default')
+// 等级来自接口（kb_registry 单一来源），前端不硬编码 kb_id === 'default'
+const isSystemKb = computed(() => kb.value?.is_system === true)
 
 const loading = ref(false)
 const kb = ref(null)
@@ -236,6 +292,7 @@ async function load() {
     cfg.browse_ignore_text = (data.config?.browse_ignore || []).join('\n')
     defaults.value = data.config || {}
     folderInfo.value = data.folder_info || { exists: false, entries: 0, subdirs: [] }
+    await loadTrash()
   } catch (e) {
     message.error(`加载失败：${e.message}`)
   } finally {
@@ -313,6 +370,59 @@ async function loadGit() {
   }
 }
 
+/* ── 回收站（P28-A）── */
+const trash = ref(null)
+const loadingTrash = ref(false)
+const purging = ref(false)
+
+function fmtBytes(n) {
+  const x = Number(n || 0)
+  if (!x) return '0B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let v = x
+  let i = 0
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i += 1 }
+  return `${i === 0 ? v : v.toFixed(1)}${units[i]}`
+}
+
+async function loadTrash() {
+  if (!kbId.value) return
+  loadingTrash.value = true
+  try {
+    trash.value = await getKbTrash(kbId.value)
+  } catch (e) {
+    message.error(`回收站状态加载失败：${e?.message || e}`)
+  } finally {
+    loadingTrash.value = false
+  }
+}
+
+async function doPurge() {
+  const days = cfg.trash_retention_days ?? trash.value?.retention_days ?? 30
+  purging.value = true
+  try {
+    const dry = await purgeKbTrash(kbId.value, { days })      // 先预演
+    if (!dry.removed_count) {
+      message.info(`没有超过 ${days} 天的回收站条目（当前 ${trash.value?.entries ?? 0} 条）`)
+      await loadTrash()
+      return
+    }
+    const names = dry.removed.slice(0, 5).map((x) => x.name).join('、')
+    const more = dry.removed_count > 5 ? ` 等 ${dry.removed_count} 条` : ''
+    const ok = window.confirm(
+      `将永久删除 ${dry.removed_count} 个回收站条目（释放 ${fmtBytes(dry.freed_bytes)}）：\n${names}${more}\n\n确认删除？`,
+    )
+    if (!ok) return
+    const real = await purgeKbTrash(kbId.value, { days, confirm: true })
+    message.success(`已清理 ${real.removed_count} 条，释放 ${fmtBytes(real.freed_bytes)}`)
+    await loadTrash()
+  } catch (e) {
+    message.error(`清理失败：${e?.message || e}`)
+  } finally {
+    purging.value = false
+  }
+}
+
 async function saveConfig() {
   savingCfg.value = true
   try {
@@ -363,6 +473,7 @@ function resetConfig() {
     auto_ingest: true,
     watch_folder: true,
     git_auto_commit: false,
+    trash_retention_days: 30,
   })
 }
 
@@ -390,6 +501,12 @@ onMounted(load)
 </script>
 
 <style scoped>
+.chunk-hint {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.7;
+}
+
 .kb-card {
   background: #ffffff;
   border: 1px solid #e8e8ed;

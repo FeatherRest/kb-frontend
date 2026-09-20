@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
-import { getHealth, getStats, searchKB } from '../api/kbApi.js'
+import { getHealth, getStats, searchKB, listKbs } from '../api/kbApi.js'
 
 const HISTORY_KEY = 'kbSearchHistory'
+const KB_ID_KEY = 'kbCurrentKbId'
 const MAX_HISTORY = 20
 
 export const useKbStore = defineStore('kb', {
@@ -23,6 +24,10 @@ export const useKbStore = defineStore('kb', {
     loading: false,
     rerankLoading: false,
     error: '',
+    /** 当前选中的知识库 ID（默认 'default'） */
+    currentKbId: localStorage.getItem(KB_ID_KEY) || 'default',
+    /** 知识库列表（缓存，用于选择器） */
+    kbList: [],
   }),
   getters: {
     /** 当前视图的结果（搜索页直接用这个） */
@@ -33,7 +38,7 @@ export const useKbStore = defineStore('kb', {
     canCompare: (s) => s.rerankedResults.length > 0 && s.rawResults.length > 0,
   },
   actions: {
-    async search({ q, mode = null, top_k = 8, rerank = null, silent = false }) {
+    async search({ q, mode = null, top_k = 8, rerank = null, kb_id = '', silent = false }) {
       const query = (q ?? this.searchQuery).trim()
       if (!query) return
       this.searchQuery = query
@@ -49,6 +54,7 @@ export const useKbStore = defineStore('kb', {
           top_k,
           mode: this.searchMode,
           rerank,
+          kb_id,
         })
         const results = Array.isArray(data) ? data : data.results || []
         if (rerank === true) {
@@ -95,6 +101,18 @@ export const useKbStore = defineStore('kb', {
       } catch {
         this.stats = null
       }
+    },
+    async loadKbList() {
+      try {
+        const data = await listKbs()
+        this.kbList = data.kbs || []
+      } catch {
+        this.kbList = []
+      }
+    },
+    setCurrentKb(kbId) {
+      this.currentKbId = kbId || 'default'
+      localStorage.setItem(KB_ID_KEY, this.currentKbId)
     },
     async checkHealth() {
       try {

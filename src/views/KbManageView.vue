@@ -26,7 +26,7 @@
             <div class="kb-kb-head">
               <span class="kb-kb-name">{{ kb.name }}</span>
               <n-tag size="tiny" round :bordered="false">{{ kb.kb_id }}</n-tag>
-              <n-tag v-if="kb.kb_id === 'default'" size="tiny" type="info" round>系统</n-tag>
+              <n-tag v-if="kb.is_system" size="tiny" type="info" round>系统级</n-tag>
             </div>
 
             <div class="kb-dim kb-path" :title="kb.root_path">📁 {{ kb.root_path }}</div>
@@ -57,13 +57,16 @@
               <n-button size="tiny" type="primary" ghost @click="useAsUploadTarget(kb)">投递到此库</n-button>
               <n-button size="tiny" tertiary @click="goConfig(kb.kb_id)">配置</n-button>
               <n-button size="tiny" quaternary @click="copy(kb.root_path)">复制路径</n-button>
-              <n-popconfirm v-if="kb.kb_id !== 'default'" @positive-click="remove(kb, false)">
+              <n-popconfirm v-if="kb.can_delete !== false" @positive-click="remove(kb, false)">
                 <template #trigger>
                   <n-button size="tiny" quaternary type="warning">移除登记</n-button>
                 </template>
                 仅移除登记（文件夹与文件保留），确认？
               </n-popconfirm>
             </n-space>
+            <div v-if="kb.can_delete === false" class="kb-dim" style="margin-top: 6px">
+              系统级知识库：承载与系统功能耦合的专区，不可删除
+            </div>
           </n-card>
         </n-grid-item>
       </n-grid>

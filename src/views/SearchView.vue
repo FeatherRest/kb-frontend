@@ -3,10 +3,17 @@
     <div class="kb-page-title">搜索</div>
 
     <n-space class="kb-toolbar" :size="10" align="center" style="margin-bottom: 12px">
+      <n-select
+        :value="store.currentKbId"
+        :options="kbOptions"
+        size="small"
+        style="width: 160px"
+        @update:value="onKbChange"
+      />
       <n-input
         v-model:value="query"
         class="kb-search-input"
-        style="width: 460px"
+        style="width: 420px"
         placeholder="输入自然语言问题 / 关键词，回车检索"
         clearable
         @keyup.enter="doSearch()"
@@ -146,6 +153,22 @@ const SCOPE_OPTIONS = [
 ]
 const MODE_LABEL = { hybrid: '混合检索', dense: '向量检索', sparse: '关键词检索' }
 
+const kbOptions = computed(() => {
+  const opts = (store.kbList || []).map((kb) => ({
+    label: kb.name || kb.kb_id,
+    value: kb.kb_id,
+  }))
+  if (!opts.some((o) => o.value === store.currentKbId)) {
+    opts.unshift({ label: store.currentKbId, value: store.currentKbId })
+  }
+  return opts
+})
+
+function onKbChange(kbId) {
+  store.setCurrentKb(kbId)
+  if (store.searchQuery) doSearch()
+}
+
 const statsCards = computed(() => {
   if (!stats.value) return []
   return [
@@ -173,11 +196,23 @@ async function doSearch(q) {
     return
   }
   query.value = text
-  await store.search({ q: text, mode: mode.value, top_k: topK.value, rerank: null })
+  await store.search({
+    q: text,
+    mode: mode.value,
+    top_k: topK.value,
+    rerank: null,
+    kb_id: store.currentKbId,
+  })
 }
 
 async function doRerank() {
-  await store.search({ q: store.searchQuery, mode: mode.value, top_k: topK.value, rerank: true })
+  await store.search({
+    q: store.searchQuery,
+    mode: mode.value,
+    top_k: topK.value,
+    rerank: true,
+    kb_id: store.currentKbId,
+  })
 }
 
 function onModeChange() {
@@ -220,6 +255,11 @@ onMounted(async () => {
     ]
   } catch {
     /* 统计/分类加载失败不阻塞搜索 */
+  }
+  try {
+    await store.loadKbList()
+  } catch {
+    /* 知识库列表加载失败不阻塞搜索 */
   }
 })
 </script>
