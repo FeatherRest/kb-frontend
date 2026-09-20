@@ -129,7 +129,7 @@
               <n-form-item label="回收站保留天数">
                 <n-input-number v-model:value="cfg.trash_retention_days" :min="0" :max="3650" :step="5"
                                 style="width: 160px" />
-                <span class="kb-dim" style="margin-left: 8px">超过该天数的回收站条目由每日 04:20 的任务清理（0 = 全部清空）</span>
+                <span class="kb-dim" style="margin-left: 8px">超过该天数的回收站条目由知识库系统内部调度自动清理（0 = 全部清空）</span>
               </n-form-item>
             </n-form>
             <n-space justify="end">
@@ -145,6 +145,10 @@
                 <span>回收站</span>
                 <n-tag size="tiny" round :bordered="false" type="info">
                   保留 {{ trash?.retention_days ?? 30 }} 天
+                </n-tag>
+                <n-tag size="tiny" round :bordered="false"
+                       :type="trash?.auto_purge === false ? 'warning' : 'success'">
+                  自动清理{{ trash?.auto_purge === false ? '已关闭' : '' }}
                 </n-tag>
               </div>
             </template>
@@ -164,6 +168,15 @@
                   </n-tag>
                 </n-descriptions-item>
                 <n-descriptions-item label="位置">{{ trash?.root || '—' }}</n-descriptions-item>
+                <n-descriptions-item label="自动清理">
+                  <span v-if="trash?.housekeeping">
+                    每 {{ trash.housekeeping.interval_hours }} 小时 ·
+                    上次 {{ (trash.housekeeping.last_run_at || '从未').slice(0, 16) }} ·
+                    下次 {{ (trash.housekeeping.next_due_at || '待首次运行').slice(0, 16) }}
+                  </span>
+                  <span v-else>—</span>
+                  <div class="kb-dim" style="margin-top: 2px">由 KB 系统内部调度（随 ingestion-worker 常驻运行，无需系统定时任务）</div>
+                </n-descriptions-item>
               </n-descriptions>
               <n-alert v-if="trash?.unparsable?.length" type="warning" :show-icon="true" style="margin-top: 10px">
                 名字无法解析的目录不会被清理：{{ trash.unparsable.join('、') }}
@@ -172,7 +185,7 @@
                 最早一条：{{ trash.items[trash.items.length - 1].name }}（{{ trash.items[trash.items.length - 1].age_days }} 天前）
               </div>
               <div class="kb-dim" style="margin-top: 6px; font-size: 12px">
-                每天 04:20 由 <span class="kb-mono">kb-trash-purge.timer</span> 自动清理超过保留天数的条目；
+                超过保留天数的条目由<b>知识库系统内部调度</b>（随 ingestion-worker 常驻运行）自动清理；
                 「立即清理」会先预演清单，确认后才真删。
               </div>
             </n-spin>
