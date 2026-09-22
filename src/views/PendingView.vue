@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { h, onMounted, ref } from 'vue'
+import { h, onActivated, ref } from 'vue'
 import { NButton, NTag, useMessage } from 'naive-ui'
 import { getPendingFiles } from '../api/kbApi.js'
 import { useIsMobile } from '../composables/useIsMobile.js'
@@ -156,5 +156,6 @@ function formatSize(bytes) {
   return `${(b / 1024 / 1024).toFixed(2)} MB`
 }
 
-onMounted(reload)
+// onActivated：keep-alive 缓存下每次回到本页都重新拉待处理清单
+onActivated(reload)
 </script>

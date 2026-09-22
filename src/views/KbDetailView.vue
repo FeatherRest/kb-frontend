@@ -385,7 +385,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onActivated, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMessage } from 'naive-ui'
 import MarkdownIt from 'markdown-it'
@@ -797,9 +797,12 @@ watch(
   },
 )
 
-onMounted(async () => {
+// onActivated：keep-alive 缓存下每次回到详情页都重新拉目录/内容
+// （原先只有 onMounted，缓存复用不重跑 → 在别处改了数据回来看到旧数据）
+// ⚠️ 树选中项只在首次进入时初始化，否则每次返回都会跳回根目录
+onActivated(async () => {
+  if (!selectedKeys.value.length) selectedKeys.value = ['__root__']
   await reloadAll()
-  selectedKeys.value = ['__root__']
 })
 </script>
 

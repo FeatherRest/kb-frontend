@@ -229,7 +229,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onActivated, reactive, ref, watch } from 'vue'
 import { useMessage } from 'naive-ui'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -510,7 +510,8 @@ async function copy(text) {
 }
 
 watch(kbId, load)
-onMounted(load)
+// onActivated：keep-alive 缓存下每次回到本页都重新拉配置（见 KbManageView 同处注释）
+onActivated(load)
 </script>
 
 <style scoped>

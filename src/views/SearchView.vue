@@ -123,7 +123,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onActivated, ref } from 'vue'
 import { useMessage } from 'naive-ui'
 import { SearchOutline } from '@vicons/ionicons5'
 import StatsCard from '../components/StatsCard.vue'
@@ -243,7 +243,9 @@ const movedCount = computed(() => {
   }).length
 })
 
-onMounted(async () => {
+// onActivated：keep-alive 缓存下每次回到搜索页都刷新统计/分类选项/知识库列表
+// （不重跑用户的搜索本身，只刷新筛选器的可选值）
+onActivated(async () => {
   try {
     stats.value = await getStats()
     const docs = await listDocuments({ per_page: 200, page: 1 })

@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onActivated, ref } from 'vue'
 import { useMessage } from 'naive-ui'
 import DocDetailDrawer from '../components/DocDetailDrawer.vue'
 import {
@@ -367,7 +367,8 @@ function formatSize(bytes) {
   return `${(b / 1024 / 1024).toFixed(2)} MB`
 }
 
-onMounted(loadLibrary)
+// onActivated：keep-alive 缓存下每次回到本页都重新拉专区数据
+onActivated(loadLibrary)
 </script>
 
 <style scoped>

@@ -143,7 +143,7 @@
 </template>
 
 <script setup>
-import { h, onMounted, reactive, ref } from 'vue'
+import { h, onActivated, reactive, ref } from 'vue'
 import { NButton, NPopconfirm, NTag, useMessage } from 'naive-ui'
 import { useIsMobile } from '../composables/useIsMobile.js'
 import {
@@ -386,7 +386,8 @@ async function removeComment(c) {
   }
 }
 
-onMounted(load)
+// onActivated：keep-alive 缓存下每次回到本页都重新拉计划表
+onActivated(load)
 </script>
 
 <style scoped>

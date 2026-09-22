@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onActivated, ref } from 'vue'
 import { useMessage } from 'naive-ui'
 import WorkflowDiagram from '../components/WorkflowDiagram.vue'
 import { PARSER_WORKFLOWS, workflowFor } from '../data/parserWorkflows.js'
@@ -137,7 +137,8 @@ async function toggle(parser, enabled) {
   }
 }
 
-onMounted(load)
+// onActivated：keep-alive 缓存下每次回到本页都重新拉解析器状态
+onActivated(load)
 </script>
 
 <style scoped>

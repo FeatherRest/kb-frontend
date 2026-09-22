@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onActivated, reactive, ref } from 'vue'
 import { useMessage } from 'naive-ui'
 import { useRouter } from 'vue-router'
 import { createKb, deleteKb, listKbs } from '../api/kbApi.js'
@@ -244,7 +244,10 @@ async function copy(text) {
   }
 }
 
-onMounted(load)
+// 🔴 用 onActivated 而非 onMounted：App.vue 用 <keep-alive> 缓存页面，
+// 缓存复用不会重跑 onMounted → 在别处改了数据（如改名）回来看到的是旧数据。
+// onActivated 在首次挂载与每次重新激活时都触发，语义正确。
+onActivated(load)
 </script>
 
 <style scoped>
