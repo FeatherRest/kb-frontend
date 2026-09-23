@@ -4,9 +4,22 @@
     <div class="lc-toolbar">
       <n-input
         v-model:value="query"
-        placeholder="检索概念图（向量 + 全文混合，与 Agent 的 MCP 检索同一条路径）"
+        placeholder="检索（先选作用域：概念图 / 知识库 / 两者）"
         clearable
         @keyup.enter="doSearch"
+      />
+      <!-- 🔴 作用域必须显式选（用户 2026-09-23：不允许"一下全查"） -->
+      <n-radio-group v-model:value="searchTarget" size="small">
+        <n-radio-button value="pages">只查概念图</n-radio-button>
+        <n-radio-button value="kb">只查知识库</n-radio-button>
+        <n-radio-button value="both">两者都要</n-radio-button>
+      </n-radio-group>
+      <n-select
+        v-if="searchTarget !== 'pages'"
+        v-model:value="searchKbId"
+        :options="kbOptions"
+        size="small"
+        style="min-width: 190px"
       />
       <n-button type="primary" :loading="searching" @click="doSearch">检索</n-button>
       <n-button quaternary :loading="loading" @click="refreshAll">刷新</n-button>
@@ -127,13 +140,22 @@
     </div>
 
     <!-- ── 检索结果 ── -->
-    <n-card v-if="hits.length" size="small" class="lc-card lc-hits" :title="`检索结果（${hits.length}）· 查询：${lastQuery}`">
-      <div v-for="(h, i) in hits" :key="`h${i}`" class="lc-hit" @click="openPage(h.slug)">
+    <n-card v-if="hits.length" size="small" class="lc-card lc-hits" :title="`检索结果（${hits.length}）· ${targetLabel} · 查询：${lastQuery}`">
+      <div
+        v-for="(h, i) in hits"
+        :key="`h${i}`"
+        class="lc-hit"
+        :class="{ 'is-clickable': h.origin === 'concepts' }"
+        @click="h.origin === 'concepts' && openPage(h.slug)"
+      >
         <div class="lc-hit-main">
-          <span class="lc-hit-slug">{{ h.slug }}</span>
-          <span class="lc-hit-section">› {{ h.section }}</span>
-          <n-tag size="tiny" :bordered="false">{{ h.mechanism }}</n-tag>
-          <n-tag v-if="h.source_type" size="tiny" type="info" :bordered="false">{{ h.source_type }}</n-tag>
+          <span class="lc-hit-slug">{{ h.title || h.slug }}</span>
+          <span v-if="h.section" class="lc-hit-section">› {{ h.section }}</span>
+          <n-tag size="tiny" :bordered="false" :type="h.origin === 'concepts' ? 'success' : 'info'">
+            {{ h.origin === 'concepts' ? '概念图' : '知识库' }}
+          </n-tag>
+          <n-tag v-if="h.kb_id" size="tiny" :bordered="false">{{ h.kb_id }}</n-tag>
+          <n-tag v-if="h.score !== undefined" size="tiny" :bordered="false">{{ h.score }}</n-tag>
         </div>
         <div class="lc-hit-text">{{ h.content }}</div>
       </div>
@@ -157,8 +179,9 @@ import {
   getLacunaPages,
   getLacunaSources,
   getLacunaStatus,
-  lacunaSearch,
+  searchKB,
 } from '../api/kbApi.js'
+import { useKbStore } from '../stores/kbStore.js'
 
 const status = ref(null)
 const pages = ref([])
@@ -173,6 +196,24 @@ const loading = ref(false)
 const loadingPage = ref(false)
 const searching = ref(false)
 const error = ref('')
+
+const store = useKbStore()
+/**
+ * 🔴 检索作用域必须显式（用户 2026-09-23）：pages=只概念图 / kb=只知识库 / both=两者。
+ * 默认「只查概念图」——本页就是概念图面板；要查别的域必须自己点，绝不"一下全查"。
+ */
+const searchTarget = ref('pages')
+const searchKbId = ref(store.currentKbId || 'default')
+const kbOptions = computed(() => [
+  { label: '全部库（显式选才生效）', value: 'all' },
+  ...(store.kbList || []).map((k) => ({
+    label: k.name ? `${k.name}（${k.kb_id}）` : String(k.kb_id),
+    value: k.kb_id || k.name,
+  })),
+])
+const targetLabel = computed(
+  () => ({ pages: '只查概念图', kb: '只查知识库', both: '两者都查' })[searchTarget.value] || '',
+)
 
 const currentSlug = computed(() => current.value?.slug || '')
 
@@ -286,10 +327,32 @@ async function doSearch() {
   searching.value = true
   error.value = ''
   try {
-    const res = await lacunaSearch(q, { scope: 'all', n: 10 })
-    hits.value = res.hits || []
-    lastQuery.value = res.query || q
-    if (!hits.value.length) error.value = `「${q}」在概念图和源里都没有命中`
+    // 显式作用域：本页默认只查概念图；查知识库/两者由用户点选
+    if (searchTarget.value !== 'pages' && !searchKbId.value) {
+      error.value = '请先选择要检索的知识库（或显式选「全部库」）'
+      searching.value = false
+      return
+    }
+    const data = await searchKB({
+      q,
+      target: searchTarget.value,
+      kb_id: searchTarget.value === 'pages' ? '' : searchKbId.value,
+      top_k: 10,
+      rerank: false,
+    })
+    const results = Array.isArray(data) ? data : data.results || []
+    hits.value = results.map((r) => ({
+      slug: r.slug || r.title || r.doc_id,
+      title: r.title || r.slug || r.doc_id,
+      section: r.section || '',
+      content: r.content_preview || r.content || '',
+      score: r.relevance_score,
+      origin: r.search_source || (r.kb_id === 'lacuna' ? 'concepts' : 'qdrant'),
+      kb_id: r.kb_id,
+      doc_id: r.doc_id,
+    }))
+    lastQuery.value = q
+    if (!hits.value.length) error.value = `「${q}」在「${targetLabel.value}」范围内没有命中`
   } catch (e) {
     error.value = `检索失败：${e.message}`
   } finally {
@@ -305,7 +368,10 @@ function onBodyClick(event) {
 
 // App.vue 用 <keep-alive>：用 onActivated 才能在「切走再回来」时重新拉数（首次挂载也会触发）。
 // 只用 onMounted 的话，Agent 期间新入库的概念页在本页看不到（本 skill 铁律 14）。
-onActivated(refreshAll)
+onActivated(() => {
+  refreshAll()
+  if (!store.kbList || !store.kbList.length) store.loadKbList()
+})
 </script>
 
 <style scoped>

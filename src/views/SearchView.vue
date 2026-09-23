@@ -3,7 +3,14 @@
     <div class="kb-page-title">搜索</div>
 
     <n-space class="kb-toolbar" :size="10" align="center" style="margin-bottom: 12px">
+      <!-- 🔴 作用域必须显式选（用户 2026-09-23：不允许"一下全查"） -->
+      <n-radio-group v-model:value="searchTarget" size="small" @update:value="onTargetChange">
+        <n-radio-button value="kb">只查知识库</n-radio-button>
+        <n-radio-button value="pages">只查概念图</n-radio-button>
+        <n-radio-button value="both">两者都要</n-radio-button>
+      </n-radio-group>
       <n-select
+        v-if="searchTarget !== 'pages'"
         :value="store.currentKbId"
         :options="kbOptions"
         size="small"
@@ -34,16 +41,6 @@
       </n-radio-group>
 
       <n-divider vertical />
-
-      <n-select v-model:value="scope" :options="SCOPE_OPTIONS" size="small" style="width: 130px" />
-      <n-select
-        v-model:value="category"
-        :options="categoryOptions"
-        size="small"
-        style="width: 170px"
-        filterable
-        tag
-      />
 
       <n-button
         size="small"
@@ -138,26 +135,26 @@ const message = useMessage()
 const query = ref('')
 const mode = ref('hybrid')
 const topK = ref(8)
-const scope = ref('')
-const category = ref('')
 const detailShow = ref(false)
 const detailDocId = ref('')
 const stats = ref(null)
-const categoryOptions = ref([])
 
 const TOPK_OPTIONS = [5, 8, 10, 15, 20, 30].map((v) => ({ label: String(v), value: v }))
-const SCOPE_OPTIONS = [
-  { label: '全部权限', value: '' },
-  { label: 'open', value: 'open' },
-  { label: 'private', value: 'private' },
-]
+// 「分类 / 权限」筛选器已移除（2026-09-22）：分类是 default 库的「专区」概念，不该全库通用；
+// 权限级别全库都是 open，且 Dashboard 侧没有按身份裁剪的需求。要按专区检索请去「专区」页。
 const MODE_LABEL = { hybrid: '混合检索', dense: '向量检索', sparse: '关键词检索' }
+
+// 🔴 检索目标域：kb（只知识库）/ pages（只概念图）/ both；本页默认 kb（KB 搜索页的本职）。
+const searchTarget = ref('kb')
+const TARGET_LABEL = { kb: '只查知识库', pages: '只查概念图', both: '两者都查' }
 
 const kbOptions = computed(() => {
   const opts = (store.kbList || []).map((kb) => ({
     label: kb.name || kb.kb_id,
     value: kb.kb_id,
   }))
+  // 「全部库」是一项**显式选择**（协议里写作 kb_id="all"）；缺省不再等于全查
+  opts.unshift({ label: '全部库（显式）', value: 'all' })
   if (!opts.some((o) => o.value === store.currentKbId)) {
     opts.unshift({ label: store.currentKbId, value: store.currentKbId })
   }
@@ -166,6 +163,11 @@ const kbOptions = computed(() => {
 
 function onKbChange(kbId) {
   store.setCurrentKb(kbId)
+  if (store.searchQuery) doSearch()
+}
+
+/** 切换作用域后自动重查（作用域变了，结果必须跟着变） */
+function onTargetChange() {
   if (store.searchQuery) doSearch()
 }
 
@@ -198,20 +200,22 @@ async function doSearch(q) {
   query.value = text
   await store.search({
     q: text,
+    target: searchTarget.value,
     mode: mode.value,
     top_k: topK.value,
     rerank: null,
-    kb_id: store.currentKbId,
+    kb_id: searchTarget.value === 'pages' ? '' : store.currentKbId,
   })
 }
 
 async function doRerank() {
   await store.search({
     q: store.searchQuery,
+    target: searchTarget.value,
     mode: mode.value,
     top_k: topK.value,
     rerank: true,
-    kb_id: store.currentKbId,
+    kb_id: searchTarget.value === 'pages' ? '' : store.currentKbId,
   })
 }
 
@@ -243,20 +247,13 @@ const movedCount = computed(() => {
   }).length
 })
 
-// onActivated：keep-alive 缓存下每次回到搜索页都刷新统计/分类选项/知识库列表
+// onActivated：keep-alive 缓存下每次回到搜索页都刷新统计/知识库列表
 // （不重跑用户的搜索本身，只刷新筛选器的可选值）
 onActivated(async () => {
   try {
     stats.value = await getStats()
-    const docs = await listDocuments({ per_page: 200, page: 1 })
-    const set = new Set()
-    for (const d of docs.documents || []) if (d.category) set.add(d.category)
-    categoryOptions.value = [
-      { label: '全部分类', value: '' },
-      ...[...set].sort().map((c) => ({ label: c, value: c })),
-    ]
   } catch {
-    /* 统计/分类加载失败不阻塞搜索 */
+    /* 统计加载失败不阻塞搜索 */
   }
   try {
     await store.loadKbList()
