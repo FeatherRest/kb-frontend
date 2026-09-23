@@ -42,6 +42,9 @@ export const getJobs = ({ state = '', limit = 50 } = {}) =>
 /* ── 搜索 ── */
 export function searchKB({
   q,
+  // 🔴 检索目标域**必须显式**（kb | pages | both）—— 后端缺省即 400，
+  // 用户 2026-09-23 定：禁止「默认全查」。
+  target = 'kb',
   top_k = 8,
   mode = 'hybrid',
   scope = '',
@@ -50,12 +53,16 @@ export function searchKB({
   rerank = null,
   kb_id = '',
 } = {}) {
-  const body = { q, top_k, mode }
+  const body = { q, target, top_k, mode }
   if (scope) body.scope = scope
   if (category) body.category = category
   if (chunk_type) body.chunk_type = chunk_type
   if (rerank !== null && rerank !== undefined) body.rerank = rerank
-  if (kb_id) body.kb_id = kb_id
+  if (target === 'pages') {
+    // 概念页与知识库是两个域，不传 kb_id
+  } else {
+    body.kb_id = kb_id || 'all'  // 线上协议："全库"必须显式写成 all（缺省不再等于全查）
+  }
   return unwrap(http.post('/v1/search', body))
 }
 

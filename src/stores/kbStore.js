@@ -38,7 +38,7 @@ export const useKbStore = defineStore('kb', {
     canCompare: (s) => s.rerankedResults.length > 0 && s.rawResults.length > 0,
   },
   actions: {
-    async search({ q, mode = null, top_k = 8, rerank = null, kb_id = '', silent = false }) {
+    async search({ q, mode = null, top_k = 8, rerank = null, kb_id = '', target = 'kb', silent = false }) {
       const query = (q ?? this.searchQuery).trim()
       if (!query) return
       this.searchQuery = query
@@ -55,6 +55,7 @@ export const useKbStore = defineStore('kb', {
           mode: this.searchMode,
           rerank,
           kb_id,
+          target,
         })
         const results = Array.isArray(data) ? data : data.results || []
         if (rerank === true) {
