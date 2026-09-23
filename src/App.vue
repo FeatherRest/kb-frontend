@@ -84,6 +84,7 @@ import {
   ClipboardOutline,
   DocumentTextOutline,
   FolderOpenOutline,
+  GitNetworkOutline,
   LibraryOutline,
   MenuOutline,
   RefreshOutline,
@@ -181,6 +182,7 @@ const MENU = [
   { key: 'Preview', label: '文档解析', icon: DocumentTextOutline, path: '/preview' },
   { key: 'Parsers', label: '解析器', icon: ServerOutline, path: '/parsers' },
   { key: 'Plan', label: '计划表', icon: ClipboardOutline, path: '/plan' },
+  { key: 'Lacuna', label: '概念图', icon: GitNetworkOutline, path: '/lacuna' },
   { key: 'Kbs', label: '知识库管理', icon: ChatbubbleOutline, path: '/kbs' },
 ]
 

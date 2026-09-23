@@ -14,6 +14,7 @@ const routes = [
   { path: '/parsers', name: 'Parsers', component: () => import('../views/ParsersView.vue'), meta: { title: '解析器' } },
   { path: '/plan', name: 'Plan', component: () => import('../views/PlanView.vue'), meta: { title: '计划表' } },
   { path: '/kbs', name: 'Kbs', component: () => import('../views/KbManageView.vue'), meta: { title: '知识库管理' } },
+  { path: '/lacuna', name: 'Lacuna', component: () => import('../views/LacunaView.vue'), meta: { title: '概念图' } },
   {
     path: '/kbs/:id',
     name: 'KbDetail',

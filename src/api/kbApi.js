@@ -117,12 +117,13 @@ export const reportHtmlUrl = (relPath) =>
 export function ingestFile(
   file,
   kbId = 'default',
-  { chunkStrategy = '', chunkDelimiter = '', chunkSize = null, chunkOverlap = null } = {},
+  { chunkStrategy = '', chunkDelimiter = '', chunkSize = null, chunkOverlap = null, force = false } = {},
 ) {
   const body = new FormData()
   body.append('file', file)
   // 目标知识库（缺省 default → 服务端按注册表解析投递目录）
   if (kbId) body.append('kb_id', kbId)
+  if (force) body.append('force', '1')
   if (chunkStrategy && chunkStrategy !== 'auto') body.append('chunk_strategy', chunkStrategy)
   if (chunkDelimiter) body.append('chunk_delimiter', chunkDelimiter)
   if (chunkSize) body.append('chunk_size', String(chunkSize))
@@ -269,6 +270,16 @@ export const purgeKbTrash = (kbId, { days = null, confirm = false } = {}) => {
   return unwrap(http.post(`/kbs/${encodeURIComponent(kbId)}/trash-purge`, body, { timeout: 300000 }))
 }
 
+/** 删除**单个**回收站条目（默认 dry-run，confirm=true 才真删） */
+export const deleteKbTrashEntry = (kbId, name, { confirm = false } = {}) =>
+  unwrap(http.post(`/kbs/${encodeURIComponent(kbId)}/trash-delete`, { name, confirm },
+    { timeout: 300000 }))
+
+/** 按删除清单把某个回收站条目**还原回原相对路径**（默认 dry-run 只预演） */
+export const restoreKbTrashEntry = (kbId, name, { dryRun = true, overwrite = false } = {}) =>
+  unwrap(http.post(`/kbs/${encodeURIComponent(kbId)}/trash-restore`,
+    { name, dry_run: dryRun, overwrite }, { timeout: 300000 }))
+
 export const getKbOverview = (kbId, path = '', showAll = false) =>
   unwrap(http.get(`/kbs/${encodeURIComponent(kbId)}/overview`, { params: { path, show_all: showAll ? 1 : 0 } }))
 
@@ -285,3 +296,21 @@ export const generateKbOverview = (kbId, { path = '', force = true, showAll = fa
 /** 原始文件 URL（图片 / PDF 直出用，只读） */
 export const kbRawUrl = (kbId, path) =>
   `${KB_API_BASE}/kbs/${encodeURIComponent(kbId)}/raw?path=${encodeURIComponent(path)}`
+
+/* ── lacuna 概念图（只读）──────────────────────────────────────────────
+ * 数据链路：浏览器 → /kb/api/v1/lacuna/*（nginx 鉴权）→ kb-api 代理
+ *          → lacuna daemon 127.0.0.1:7655 → vault.db
+ * 前端不能直连库：DuckDB 是单写库，daemon 握着写锁，别的进程连只读都打不开。
+ * 后端只代理只读动作，写动作（sweep/sync/adversary-commit）不在白名单里。
+ */
+export const getLacunaStatus = () => unwrap(http.get('/v1/lacuna/status'))
+export const getLacunaPages = () => unwrap(http.get('/v1/lacuna/pages'))
+export const getLacunaPage = (slug) =>
+  unwrap(http.get('/v1/lacuna/page', { params: { slug } }))
+export const getLacunaSources = () => unwrap(http.get('/v1/lacuna/sources'))
+export const getLacunaGraph = () => unwrap(http.get('/v1/lacuna/graph'))
+export const getLacunaClaims = ({ mode = 'virgin', page = '' } = {}) =>
+  unwrap(http.get('/v1/lacuna/claims', { params: { mode, page } }))
+/** 混合检索（向量 + 全文，与 MCP wiki 工具同一条代码路径）；embedding 要现算，超时给宽 */
+export const lacunaSearch = (q, { scope = 'all', n = 10 } = {}) =>
+  unwrap(http.get('/v1/lacuna/search', { params: { q, scope, n }, timeout: 120000 }))
