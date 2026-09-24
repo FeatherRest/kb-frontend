@@ -123,6 +123,15 @@
         </n-form-item>
       </n-form>
 
+      <div style="margin-top: 4px">
+        <n-checkbox v-model:checked="forceOverwrite" size="small">
+          强制重新入库（内容与库中已有文档重复时，覆盖并重新解析）
+        </n-checkbox>
+        <div class="kb-dim" style="margin-top: 4px">
+          默认关闭：重复内容会直接报错并指出与哪份文档重复，不会在 inbox 留下「待处理」文件。
+        </div>
+      </div>
+
       <n-alert v-if="!paramsValid" type="warning" :show-icon="true" style="margin-top: 10px">
         {{ invalidReason }}
       </n-alert>
@@ -290,6 +299,8 @@ const visible = computed({
 })
 
 const step = ref(0)
+/** 内容重复时是否强制覆盖（默认关闭：重复直接报错，不静默留在 inbox） */
+const forceOverwrite = ref(false)
 const fileList = ref([])
 const files = ref([])
 const customMode = ref(false)
@@ -446,7 +457,7 @@ async function goStep3() {
   const p = payloadParams()
   for (const f of files.value) {
     try {
-      const r = await ingestFile(f.file, props.kbId, p)
+      const r = await ingestFile(f.file, props.kbId, { ...p, force: forceOverwrite.value })
       results.value.push({
         key: uidOf(f),
         name: f.name,
@@ -471,6 +482,7 @@ function resetAll() {
   previewCache.clear()
   activeUid.value = ''
   customMode.value = false
+  forceOverwrite.value = false
   restoreDefaults()
 }
 

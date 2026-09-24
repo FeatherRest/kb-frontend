@@ -303,21 +303,3 @@ export const generateKbOverview = (kbId, { path = '', force = true, showAll = fa
 /** 原始文件 URL（图片 / PDF 直出用，只读） */
 export const kbRawUrl = (kbId, path) =>
   `${KB_API_BASE}/kbs/${encodeURIComponent(kbId)}/raw?path=${encodeURIComponent(path)}`
-
-/* ── lacuna 概念图（只读）──────────────────────────────────────────────
- * 数据链路：浏览器 → /kb/api/v1/lacuna/*（nginx 鉴权）→ kb-api 代理
- *          → lacuna daemon 127.0.0.1:7655 → vault.db
- * 前端不能直连库：DuckDB 是单写库，daemon 握着写锁，别的进程连只读都打不开。
- * 后端只代理只读动作，写动作（sweep/sync/adversary-commit）不在白名单里。
- */
-export const getLacunaStatus = () => unwrap(http.get('/v1/lacuna/status'))
-export const getLacunaPages = () => unwrap(http.get('/v1/lacuna/pages'))
-export const getLacunaPage = (slug) =>
-  unwrap(http.get('/v1/lacuna/page', { params: { slug } }))
-export const getLacunaSources = () => unwrap(http.get('/v1/lacuna/sources'))
-export const getLacunaGraph = () => unwrap(http.get('/v1/lacuna/graph'))
-export const getLacunaClaims = ({ mode = 'virgin', page = '' } = {}) =>
-  unwrap(http.get('/v1/lacuna/claims', { params: { mode, page } }))
-/** 混合检索（向量 + 全文，与 MCP wiki 工具同一条代码路径）；embedding 要现算，超时给宽 */
-export const lacunaSearch = (q, { scope = 'all', n = 10 } = {}) =>
-  unwrap(http.get('/v1/lacuna/search', { params: { q, scope, n }, timeout: 120000 }))

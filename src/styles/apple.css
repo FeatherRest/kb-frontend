@@ -303,3 +303,143 @@ body,
     grid-template-columns: 1fr 1fr !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   知识库详情页公共样式
+   KbDetailView 与它的子 tab 组件（台账 / 目录与内容 / 回收站 / Git）
+   都复用这些类；放在全局可避免每个组件各抄一份（拆组件后 scoped 不再生效）。
+   ══════════════════════════════════════════════════════════════════ */
+.kb-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.kb-path-line {
+  color: var(--kb-text-2);
+  word-break: break-all;
+}
+.kb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.kb-row:hover {
+  background: var(--kb-bg);
+}
+.kb-row-active {
+  background: var(--kb-accent-soft);
+}
+.kb-row-icon {
+  font-size: 15px;
+}
+.kb-row-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--kb-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kb-row-del {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.kb-row:hover .kb-row-del {
+  opacity: 1;
+}
+.kb-doc-title {
+  font-size: 13.5px;
+  color: var(--kb-text);
+  font-weight: 500;
+}
+.kb-del-file {
+  font-size: 12px;
+  color: var(--kb-text-2);
+  word-break: break-all;
+}
+.kb-l0 {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: var(--kb-accent-soft);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--kb-text);
+  margin-bottom: 10px;
+}
+.kb-l0-tag {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--kb-accent);
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-top: 2px;
+}
+.kb-l1 {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--kb-text);
+}
+.kb-l1 h2 {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin: 12px 0 6px;
+  color: var(--kb-text);
+}
+.kb-l1 h3 {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin: 10px 0 4px;
+}
+.kb-l1 ul,
+.kb-l1 ol {
+  padding-left: 20px;
+  margin: 6px 0;
+}
+.kb-l1 li {
+  margin: 3px 0;
+}
+.kb-l1 code {
+  font-family: var(--kb-mono);
+  font-size: 12px;
+  background: var(--kb-bg);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.kb-l1 strong {
+  font-weight: 600;
+}
+.kb-l1 p {
+  margin: 6px 0;
+}
+.kb-ledger-name {
+  font-weight: 500;
+}
+.kb-ledger-sub {
+  font-size: 11px;
+  word-break: break-all;
+}
+.kb-ledger-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+@media (max-width: 768px) {
+  .kb-row-del {
+    opacity: 1;
+  }
+}
+

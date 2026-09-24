@@ -4,10 +4,12 @@
 
     <n-space class="kb-toolbar" :size="10" align="center" style="margin-bottom: 12px">
       <!-- 🔴 作用域必须显式选（用户 2026-09-23：不允许"一下全查"） -->
+      <!-- 概念图档（pages/both）在数据源迁移期隐藏；lacuna 已退役，等 LLM Wiki 接入后
+           把 CONCEPT_DOMAIN_READY 置 true 即恢复（契约本身未变，见 SearchView 脚本区）。 -->
       <n-radio-group v-model:value="searchTarget" size="small" @update:value="onTargetChange">
         <n-radio-button value="kb">只查知识库</n-radio-button>
-        <n-radio-button value="pages">只查概念图</n-radio-button>
-        <n-radio-button value="both">两者都要</n-radio-button>
+        <n-radio-button v-if="CONCEPT_DOMAIN_READY" value="pages">只查概念图</n-radio-button>
+        <n-radio-button v-if="CONCEPT_DOMAIN_READY" value="both">两者都要</n-radio-button>
       </n-radio-group>
       <n-select
         v-if="searchTarget !== 'pages'"
@@ -145,6 +147,9 @@ const TOPK_OPTIONS = [5, 8, 10, 15, 20, 30].map((v) => ({ label: String(v), valu
 const MODE_LABEL = { hybrid: '混合检索', dense: '向量检索', sparse: '关键词检索' }
 
 // 🔴 检索目标域：kb（只知识库）/ pages（只概念图）/ both；本页默认 kb（KB 搜索页的本职）。
+// 概念图档在数据源迁移期关闭：lacuna 已于 2026-09-24 退役，新数据源 LLM Wiki 未接入 ——
+// 此时 kb-api 会对 pages/both 回 503（不静默返回空）。接入完成后置 true 即恢复。
+const CONCEPT_DOMAIN_READY = false
 const searchTarget = ref('kb')
 const TARGET_LABEL = { kb: '只查知识库', pages: '只查概念图', both: '两者都查' }
 
